@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using VehicleTracking.Application.Exceptions.Data;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Domain.Entities;
 
@@ -6,7 +7,7 @@ namespace VehicleTracking.Persistence;
 
 public class PostgresDataStore(IDbContextFactory<VehicleTrackingDbContext> factory) : IDataStore
 {
-    async Task<IReadOnlyCollection<T>> GetAsync<T>() where T : class, IDbSetEntity
+    public async Task<IReadOnlyCollection<T>> GetAsync<T>() where T : class, IDbSetEntity
     {
         await using var context = await factory.CreateDbContextAsync();
         
@@ -16,14 +17,14 @@ public class PostgresDataStore(IDbContextFactory<VehicleTrackingDbContext> facto
         return query;
     }
 
-    async Task<T> AddAsync<T>(T entity) where T : class, IDbSetEntity
+    public async Task<T> AddAsync<T>(T entity) where T : class, IDbSetEntity
     {
         await using var context = await factory.CreateDbContextAsync();
         await context.AddAsync(entity);
         var count = await context.SaveChangesAsync();
 
         if (count < 1)
-            throw new Exception(); // implement correct exception
+            throw new DataFailedCreating(entity.GetType());
 
         context.Update(entity);
         return entity;

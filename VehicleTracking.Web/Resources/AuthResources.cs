@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Models;
+using VehicleTracking.Application.Models.Authentication;
 
 namespace VehicleTracking.Web.Resources;
 

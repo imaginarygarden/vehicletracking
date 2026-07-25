@@ -3,15 +3,25 @@ using dotenv.net;
 using VehicleTracking.Application.Enums;
 using VehicleTracking.Application.Exceptions.Environment;
 using VehicleTracking.Application.Models;
+using VehicleTracking.Domain.Enums;
 
 namespace VehicleTracking.Application.Common;
+
+// CONNECTION_STRING="Server=127.0.0.1;Port=5432;Database=myDataBase;User Id=myUsername;Password=myPassword;"
+// CREDENTIALS_MAX_LENGTH=1024
+// MISC_MAX_LENGTH=128
+// STANDARD_ROLE="User"
+// ASPNETCORE_ENVIRONMENT="Development"
 
 public class EnvironmentUtilities
 {
     private static bool _initialized;
     private static readonly Dictionary<string, EnvironmentDefaultValueDto> Default = new () {
+        {"CONNECTION_STRING", new ("Server=127.0.0.1;Port=5432;Database=myDataBase;User Id=myUsername;Password=myPassword;", typeof(string))},
+        {"CREDENTIALS_MAX_LENGTH", new ("1024", typeof(int))},
+        {"MISC_MAX_LENGTH", new ("128", typeof(int))},
+        {"STANDARD_ROLE", new ("User", typeof(UserRole))},
         {"ASPNETCORE_ENVIRONMENT", new("Development", typeof(DeploymentType))},
-        {"POSTGRES_DB", new ("Server=127.0.0.1;Port=5432;Database=myDataBase;User Id=myUsername;Password=myPassword;", typeof(string))}
     };
     
     private static object ConvertToObject(string key)
