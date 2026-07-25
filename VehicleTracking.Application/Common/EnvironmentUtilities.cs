@@ -17,7 +17,7 @@ public class EnvironmentUtilities
 {
     private static bool _initialized;
     private static readonly Dictionary<string, EnvironmentDefaultValueDto> Default = new () {
-        {"CONNECTION_STRING", new ("Server=127.0.0.1;Port=5432;Database=myDataBase;User Id=myUsername;Password=myPassword;", typeof(string))},
+        {"CONNECTION_STRING", new ("Server=127.0.0.1;Port=5432;Database=tracking;User Id=postgres;Password=postgres;", typeof(string))},
         {"CREDENTIALS_MAX_LENGTH", new ("1024", typeof(int))},
         {"MISC_MAX_LENGTH", new ("128", typeof(int))},
         {"STANDARD_ROLE", new ("User", typeof(UserRole))},

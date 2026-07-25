@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using VehicleTracking.Web.Resources;
 
 namespace VehicleTracking.Web;
 
@@ -8,6 +9,6 @@ public static class EndpointRouteBuilderExtensions
     {
         var group = endpoints.MapGroup("/api");
 
-        // group.MapGet("/test", async Task<Results<NotFound>> () => { return await NotFound(); });
+        group.MapPost("login", AuthResources.Login);
     }
 }
