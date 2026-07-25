@@ -1,8 +1,9 @@
-﻿using VehicleTracking.Domain.Enums;
+﻿using VehicleTracking.Application.Interfaces;
+using VehicleTracking.Domain.Enums;
 
 namespace VehicleTracking.Domain.Entities;
 
-public class User
+public class User : IDbSetEntity
 {
     public int Id { get; set; }
     public required string Username { get; set; }

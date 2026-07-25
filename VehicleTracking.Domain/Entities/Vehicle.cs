@@ -1,6 +1,8 @@
-﻿namespace VehicleTracking.Domain.Entities;
+﻿using VehicleTracking.Application.Interfaces;
 
-public class Vehicle
+namespace VehicleTracking.Domain.Entities;
+
+public class Vehicle : IDbSetEntity
 {
     public int Id { get; set; }
     public int UserId { get; set; }

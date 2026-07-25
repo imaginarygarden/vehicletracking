@@ -7,6 +7,7 @@ namespace VehicleTracking.Persistence;
 
 public class VehicleTrackingDbContext : DbContext
 {
+    public DbSet<User> User => Set<User>();
     public DbSet<Vehicle> Vehicle => Set<Vehicle>();
     public DbSet<GasBill> GasBill => Set<GasBill>();
     
