@@ -10,7 +10,7 @@ namespace VehicleTracking.Application.Services;
 public class EnvironmentService : IEnvironmentService
 {
     private readonly Dictionary<string, EnvironmentDefaultValueDto> _default = new () {
-        {"ENVIRONMENT", new("Development", typeof(DeploymentType))},
+        {"ASPNETCORE_ENVIRONMENT", new("Development", typeof(DeploymentType))},
         {"POSTGRES_DB", new ("Server=127.0.0.1;Port=5432;Database=myDataBase;User Id=myUsername;Password=myPassword;", typeof(string))}
     };
 
@@ -19,7 +19,7 @@ public class EnvironmentService : IEnvironmentService
     private object ConvertToObject(string key)
     {
         if (!_default.ContainsKey(key))
-            throw new EnvironmentInvalidKey(key);
+            throw new EnvironmentInvalidRequestedKey(key);
 
         var value = Environment.GetEnvironmentVariable(key);
 
@@ -39,15 +39,15 @@ public class EnvironmentService : IEnvironmentService
     public EnvironmentService(IUtilityService utilityService)
     {
         _utilityService = utilityService;
-        
+
         DotEnv.Load(options: new DotEnvOptions(
-            ignoreExceptions: false,           // Throw on errors instead of silently failing (default: true)
-            encoding: Encoding.UTF8,           // File encoding (default: UTF-8)
-            trimValues: true,                  // Strip whitespace from values (default: false)
-            overwriteExistingVars: true,       // Skip vars already set in the environment (default: true)
-            probeForEnv: true,                 // Search parent directories for a .env file (default: false)
-            probeLevelsToSearch: 4,            // How many directory levels to ascend when probing (default: 4)
-            supportExportSyntax: true          // Support `export KEY=VALUE` syntax (default: false)
+            ignoreExceptions: true,
+            encoding: Encoding.UTF8,
+            trimValues: true,
+            overwriteExistingVars: true,
+            probeForEnv: true,
+            probeLevelsToSearch: 4,
+            supportExportSyntax: true 
         ));
         
         foreach (var pair in _default)
@@ -57,11 +57,20 @@ public class EnvironmentService : IEnvironmentService
             if (value == null)
                 throw new EnvironmentValuesMissing(pair.Key);
 
-            if (pair.Key.EndsWith("PASSWORD") && value == pair.Value.Value)
-                throw new EnvironmentDefaultValues(pair.Key);
-
             if (!utilityService.IsValidType(value, pair.Value.Type))
-                throw new EnvironmentInvalidType(pair.Key);
+                throw new EnvironmentInvalidType(pair.Key, pair.Value.Type);
+        }
+
+        // Run additional check for production
+        if (GetVariable<DeploymentType>("ASPNETCORE_ENVIRONMENT") == DeploymentType.Production)
+        {
+            foreach (var pair in _default)
+            {
+                var value = Environment.GetEnvironmentVariable(pair.Key);
+                
+                if (pair.Key.EndsWith("PASSWORD") && value == pair.Value.Value)
+                    throw new EnvironmentDefaultValues(pair.Key);
+            }
         }
     }
 

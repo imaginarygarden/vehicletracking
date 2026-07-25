@@ -16,8 +16,12 @@
 
     private void IncrementCount()
     {
-        Console.WriteLine(EnvironmentService.GetVariable<DeploymentType>("ENVIRONMENT"));
         currentCount++;
+
+        if (currentCount == 2)
+        {
+            Console.WriteLine(EnvironmentService.GetVariable<DeploymentType>("ASPNETCORE_ENVIRONMENT"));
+        }
     }
 
 }

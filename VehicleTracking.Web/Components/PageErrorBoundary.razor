@@ -1,0 +1,24 @@
+﻿@inject ISnackbar Snackbar
+
+<ErrorBoundary @ref="_errorBoundary" ErrorContent="@HandleError">
+    @ChildContent
+</ErrorBoundary>
+
+@code {
+    private ErrorBoundary? _errorBoundary;
+    
+    [Parameter]
+    public required RenderFragment ChildContent { get; set; }
+
+    private RenderFragment HandleError(Exception exception)
+    {
+        return @<text>
+                    @{
+                        Snackbar.Add($"An error occurred: {exception.Message}", Severity.Error);
+                        StateHasChanged();
+                        _errorBoundary?.Recover();
+                    }
+                </text>;
+    }
+
+}
