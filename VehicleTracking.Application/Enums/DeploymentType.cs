@@ -3,5 +3,6 @@
 public enum DeploymentType
 {
     Development,
+    Staging,
     Production
 }
