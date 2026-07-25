@@ -22,12 +22,12 @@ builder.Services.AddOpenApi();
 
 // Add db connection
 builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
-    options.UseNpgsql(EnvironmentUtilities.GetVariable<string>("POSTGRES_DB"))
+    options.UseNpgsql(EnvironmentUtilities.GetVariable<string>("CONNECTION_STRING"))
 );
 
 // Add user-defined services
 builder.Services.AddScoped<IDataStore, PostgresDataStore>();
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

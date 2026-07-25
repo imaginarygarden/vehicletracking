@@ -9,13 +9,36 @@ namespace VehicleTracking.Web.Resources;
 
 public static class AuthResources
 {
-    public static async Task<IResult> Login(HttpContext context, LoginRequestDto loginRequest, IUserService userService)
+    public static async Task<IResult> Login(HttpContext context, LoginRequestDto loginRequest, IAuthService authService)
     {
-        var user = await userService.AuthenticateAsync(loginRequest);
+        var response = await authService.AuthenticateAsync(loginRequest);
 
-        if (user is null)
-            return Results.Unauthorized();
+        return response switch
+        {
+            ResponseDto<UserDto>.SuccessDto successDto =>
+                await SignInUserAsync(context, successDto.Value),
 
+            ResponseDto<UserDto>.FailureDto failureDto =>
+                Results.StatusCode((int)failureDto.Code)
+        };
+    }
+    
+    public static async Task<IResult> Register(HttpContext context, RegisterRequestDto registerRequest, IAuthService authService)
+    {
+        var response = await authService.RegisterAsync(registerRequest);
+        
+        return response switch
+        {
+            ResponseDto<UserDto>.SuccessDto successDto =>
+                Results.Ok(successDto.Value),
+
+            ResponseDto<UserDto>.FailureDto failureDto =>
+                Results.StatusCode((int)failureDto.Code)
+        };
+    }
+    
+    private static async Task<IResult> SignInUserAsync(HttpContext context, UserDto user)
+    {
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -23,12 +46,9 @@ public static class AuthResources
             new Claim(ClaimTypes.Role, user.Role)
         };
 
-        var identity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme);
-
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await context.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
+            CookieAuthenticationDefaults.AuthenticationScheme, 
             new ClaimsPrincipal(identity));
 
         return Results.Ok();

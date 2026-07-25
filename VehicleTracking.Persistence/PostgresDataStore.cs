@@ -17,14 +17,14 @@ public class PostgresDataStore(IDbContextFactory<VehicleTrackingDbContext> facto
         return query;
     }
 
-    public async Task<T> AddAsync<T>(T entity) where T : class, IDbSetEntity
+    public async Task<T?> AddAsync<T>(T entity) where T : class, IDbSetEntity
     {
         await using var context = await factory.CreateDbContextAsync();
         await context.AddAsync(entity);
         var count = await context.SaveChangesAsync();
 
         if (count < 1)
-            throw new DataFailedCreating(entity.GetType());
+            return null;
 
         context.Update(entity);
         return entity;
