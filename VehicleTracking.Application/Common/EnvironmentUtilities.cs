@@ -1,24 +1,22 @@
 ﻿using System.Text;
 using dotenv.net;
 using VehicleTracking.Application.Enums;
-using VehicleTracking.Application.Exceptions;
-using VehicleTracking.Application.Interfaces;
+using VehicleTracking.Application.Exceptions.Environment;
 using VehicleTracking.Application.Models;
 
-namespace VehicleTracking.Application.Services;
+namespace VehicleTracking.Application.Common;
 
-public class EnvironmentService : IEnvironmentService
+public class EnvironmentUtilities
 {
-    private readonly Dictionary<string, EnvironmentDefaultValueDto> _default = new () {
+    private static bool _initialized;
+    private static readonly Dictionary<string, EnvironmentDefaultValueDto> Default = new () {
         {"ASPNETCORE_ENVIRONMENT", new("Development", typeof(DeploymentType))},
         {"POSTGRES_DB", new ("Server=127.0.0.1;Port=5432;Database=myDataBase;User Id=myUsername;Password=myPassword;", typeof(string))}
     };
-
-    private IUtilityService _utilityService;
     
-    private object ConvertToObject(string key)
+    private static object ConvertToObject(string key)
     {
-        if (!_default.ContainsKey(key))
+        if (!Default.ContainsKey(key))
             throw new EnvironmentInvalidRequestedKey(key);
 
         var value = Environment.GetEnvironmentVariable(key);
@@ -28,7 +26,7 @@ public class EnvironmentService : IEnvironmentService
 
         try
         {
-            return _utilityService.ConvertToObject(value, _default[key].Type);
+            return TypeUtilities.Parse(value, Default[key].Type);
         }
         catch (Exception exception)
         {
@@ -36,10 +34,24 @@ public class EnvironmentService : IEnvironmentService
         }
     }
     
-    public EnvironmentService(IUtilityService utilityService)
+    public static T GetVariable<T>(string key)
     {
-        _utilityService = utilityService;
+        // Ensure bootstrap on first access;
+        Bootstrap();
+        
+        if (ConvertToObject(key) is T value)
+        {
+            return value;
+        }
 
+        throw new EnvironmentInvalidRequestedType(key);
+    }
+    
+    public static void Bootstrap()
+    {
+        if (_initialized)
+            return;
+        
         DotEnv.Load(options: new DotEnvOptions(
             ignoreExceptions: true,
             encoding: Encoding.UTF8,
@@ -50,21 +62,21 @@ public class EnvironmentService : IEnvironmentService
             supportExportSyntax: true 
         ));
         
-        foreach (var pair in _default)
+        foreach (var pair in Default)
         {
             var value = Environment.GetEnvironmentVariable(pair.Key);
 
             if (value == null)
                 throw new EnvironmentValuesMissing(pair.Key);
 
-            if (!utilityService.IsValidType(value, pair.Value.Type))
+            if (!TypeUtilities.Validate(value, pair.Value.Type))
                 throw new EnvironmentInvalidType(pair.Key, pair.Value.Type);
         }
 
         // Run additional check for production
         if (GetVariable<DeploymentType>("ASPNETCORE_ENVIRONMENT") == DeploymentType.Production)
         {
-            foreach (var pair in _default)
+            foreach (var pair in Default)
             {
                 var value = Environment.GetEnvironmentVariable(pair.Key);
                 
@@ -72,15 +84,8 @@ public class EnvironmentService : IEnvironmentService
                     throw new EnvironmentDefaultValues(pair.Key);
             }
         }
-    }
 
-    public T GetVariable<T>(string key)
-    {
-        if (ConvertToObject(key) is T value)
-        {
-            return value;
-        }
-
-        throw new EnvironmentInvalidRequestedType(key);
+        _initialized = true;
     }
+    
 }

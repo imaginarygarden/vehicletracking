@@ -1,4 +1,4 @@
-﻿namespace VehicleTracking.Application.Exceptions;
+﻿namespace VehicleTracking.Application.Exceptions.Environment;
 
 public class EnvironmentValuesMissing : Exception
 {

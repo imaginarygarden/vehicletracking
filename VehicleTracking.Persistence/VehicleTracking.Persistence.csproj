@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\VehicleTracking.Application\VehicleTracking.Application.csproj" />
       <ProjectReference Include="..\VehicleTracking.Domain\VehicleTracking.Domain.csproj" />
     </ItemGroup>
 

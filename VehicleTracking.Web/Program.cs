@@ -1,12 +1,16 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Scalar.AspNetCore;
-using VehicleTracking.Application.Interfaces;
-using VehicleTracking.Application.Services;
+using VehicleTracking.Application.Common;
 using VehicleTracking.Persistence;
+using VehicleTracking.Web;
 using VehicleTracking.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Ensure ASPNETCORE_ENVIRONMENT is initialized beforehand
+EnvironmentUtilities.Bootstrap();
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
@@ -14,22 +18,29 @@ builder.Services.AddMudServices();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Add user-defined services
-builder.Services.AddScoped<IUtilityService, UtilityService>();
-builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
-
 // Add db connection
-builder.Services.AddDbContextFactory<VehicleTrackingDbContext>((provider, options) =>
-{
-    var environmentService = provider.GetRequiredService<IEnvironmentService>();
-    options.UseNpgsql(environmentService.GetVariable<string>("POSTGRES_DB"));
-});
+builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
+    options.UseNpgsql(EnvironmentUtilities.GetVariable<string>("POSTGRES_DB"))
+);
+
+// Add user-defined services
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add authentication
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie();
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -53,5 +64,6 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapEndpoints();
 
 app.Run();

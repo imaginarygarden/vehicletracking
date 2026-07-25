@@ -1,11 +1,10 @@
 ﻿using System.Reflection;
-using VehicleTracking.Application.Interfaces;
 
-namespace VehicleTracking.Application.Services;
+namespace VehicleTracking.Application.Common;
 
-public class UtilityService : IUtilityService
+public static class TypeUtilities
 {
-    public object ConvertToObject(string value, Type conversionType)
+    public static object Parse(string value, Type conversionType)
     {
         try
         {
@@ -22,11 +21,11 @@ public class UtilityService : IUtilityService
         }
     }
     
-    public bool IsValidType(string value, Type targetType)
+    public static bool Validate(string value, Type targetType)
     {
         try
         {
-            ConvertToObject(value, targetType);
+            Parse(value, targetType);
             return true;
         }
         catch (Exception)
@@ -34,4 +33,5 @@ public class UtilityService : IUtilityService
             return false;
         }
     }
+    
 }

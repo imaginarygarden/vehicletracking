@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using VehicleTracking.Application.Common;
 using VehicleTracking.Domain.Entities;
 
 namespace VehicleTracking.Persistence;
