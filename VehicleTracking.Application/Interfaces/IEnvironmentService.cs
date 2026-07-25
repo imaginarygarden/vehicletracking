@@ -2,5 +2,5 @@
 
 public interface IEnvironmentService
 {
-    string? GetVariable(string key);
+    T GetVariable<T>(string key);
 }

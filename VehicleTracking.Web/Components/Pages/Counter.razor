@@ -1,4 +1,7 @@
 ﻿@page "/counter"
+@using VehicleTracking.Application.Enums
+@using VehicleTracking.Application.Interfaces
+@inject IEnvironmentService EnvironmentService
 
 <PageTitle>Counter</PageTitle>
 
@@ -13,6 +16,7 @@
 
     private void IncrementCount()
     {
+        Console.WriteLine(EnvironmentService.GetVariable<DeploymentType>("ENVIRONMENT"));
         currentCount++;
     }
 

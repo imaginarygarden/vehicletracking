@@ -11,4 +11,10 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.18" />
         <PackageReference Include="MudBlazor" Version="8.*"/>
     </ItemGroup>
+
+
+    <ItemGroup>
+      <ProjectReference Include="..\VehicleTracking.Application\VehicleTracking.Application.csproj" />
+      <ProjectReference Include="..\VehicleTracking.Persistence\VehicleTracking.Persistence.csproj" />
+    </ItemGroup>
 </Project>

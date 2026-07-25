@@ -1,10 +1,25 @@
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using VehicleTracking.Application.Interfaces;
+using VehicleTracking.Application.Services;
+using VehicleTracking.Persistence;
 using VehicleTracking.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
+
+// Add user-defined services
+builder.Services.AddScoped<IUtilityService, UtilityService>();
+builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
+
+// Add db connection
+builder.Services.AddDbContextFactory<VehicleTrackingDbContext>((provider, options) =>
+{
+    var environmentService = provider.GetRequiredService<IEnvironmentService>();
+    options.UseNpgsql(environmentService.GetVariable<string>("POSTGRES_DB"));
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
