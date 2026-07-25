@@ -1,7 +1,6 @@
 ﻿@page "/counter"
+@using VehicleTracking.Application.Common
 @using VehicleTracking.Application.Enums
-@using VehicleTracking.Application.Interfaces
-@inject IEnvironmentService EnvironmentService
 
 <PageTitle>Counter</PageTitle>
 
@@ -20,7 +19,7 @@
 
         if (currentCount == 2)
         {
-            Console.WriteLine(EnvironmentService.GetVariable<DeploymentType>("ASPNETCORE_ENVIRONMENT"));
+            Console.WriteLine(EnvironmentUtilities.GetVariable<DeploymentType>("ASPNETCORE_ENVIRONMENT"));
         }
     }
 

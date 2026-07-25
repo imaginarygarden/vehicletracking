@@ -62,6 +62,8 @@ public class EnvironmentUtilities
         if (_initialized)
             return;
         
+        _initialized = true;
+        
         DotEnv.Load(options: new DotEnvOptions(
             ignoreExceptions: true,
             encoding: Encoding.UTF8,
@@ -94,8 +96,6 @@ public class EnvironmentUtilities
                     throw new EnvironmentDefaultValues(pair.Key);
             }
         }
-
-        _initialized = true;
     }
     
 }

@@ -3,14 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Scalar.AspNetCore;
 using VehicleTracking.Application.Common;
+using VehicleTracking.Application.Interfaces;
+using VehicleTracking.Application.Services;
 using VehicleTracking.Persistence;
 using VehicleTracking.Web;
 using VehicleTracking.Web.Components;
 
-var builder = WebApplication.CreateBuilder(args);
-
 // Ensure ASPNETCORE_ENVIRONMENT is initialized beforehand
 EnvironmentUtilities.Bootstrap();
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
@@ -24,7 +26,8 @@ builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
 );
 
 // Add user-defined services
-
+builder.Services.AddScoped<IDataStore, PostgresDataStore>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
