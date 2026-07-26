@@ -10,5 +10,6 @@ public static class EndpointRouteBuilderExtensions
         var group = endpoints.MapGroup("/api");
 
         group.MapPost("login", AuthResources.Login);
+        group.MapPost("register", AuthResources.Register);
     }
 }

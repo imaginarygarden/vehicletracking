@@ -12,14 +12,15 @@ public static class AuthResources
     public static async Task<IResult> Login(HttpContext context, LoginRequestDto loginRequest, IAuthService authService)
     {
         var response = await authService.AuthenticateAsync(loginRequest);
-
         return response switch
         {
             ResponseDto<UserDto>.SuccessDto successDto =>
                 await SignInUserAsync(context, successDto.Value),
 
             ResponseDto<UserDto>.FailureDto failureDto =>
-                Results.StatusCode((int)failureDto.Code)
+                Results.StatusCode((int)failureDto.Code),
+            
+            _ => Results.StatusCode(500)
         };
     }
     
@@ -33,7 +34,9 @@ public static class AuthResources
                 Results.Ok(successDto.Value),
 
             ResponseDto<UserDto>.FailureDto failureDto =>
-                Results.StatusCode((int)failureDto.Code)
+                Results.StatusCode((int)failureDto.Code),
+                
+            _ => Results.StatusCode(500)
         };
     }
     

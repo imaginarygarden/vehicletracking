@@ -28,6 +28,11 @@ builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
 // Add user-defined services
 builder.Services.AddScoped<IDataStore, PostgresDataStore>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+// TODO: Do a proper migration
+builder.Services.AddScoped(_ => new HttpClient
+{
+    BaseAddress = new Uri(EnvironmentUtilities.GetVariable<string>("ASPNETCORE_URLS").Split(";").Last())
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -36,7 +41,11 @@ builder.Services.AddRazorComponents()
 // Add authentication
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie();
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/login";
+        options.LogoutPath = "/logout";
+    });
 
 builder.Services.AddAuthorization();
 

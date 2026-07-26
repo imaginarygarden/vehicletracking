@@ -1,0 +1,36 @@
+﻿@page "/login"
+@inject HttpClient HttpClient
+@inject NavigationManager Navigation
+@using VehicleTracking.Application.Models.Authentication;
+
+<form @onsubmit="HandleSignIn">
+    <input type="text" @bind="username" placeholder="Username" />
+    <input type="password" @bind="password" placeholder="Password" />
+    <button type="submit">Sign In</button>
+</form>
+
+@code {
+    private string username = "";
+    private string password = "";
+
+    private async Task HandleSignIn()
+    {
+        var userDto = new LoginRequestDto(username, password);
+
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("/api/login", userDto);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/");
+            }
+
+            Console.WriteLine(response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Sign in failed: {ex.Message}");
+        }
+    }
+}

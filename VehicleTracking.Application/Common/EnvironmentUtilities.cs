@@ -22,6 +22,7 @@ public class EnvironmentUtilities
         {"MISC_MAX_LENGTH", new ("128", typeof(int))},
         {"STANDARD_ROLE", new ("User", typeof(UserRole))},
         {"ASPNETCORE_ENVIRONMENT", new("Development", typeof(DeploymentType))},
+        {"ASPNETCORE_URLS", new("http://localhost:5001;https://localhost:7001", typeof(string))},
     };
     
     private static object ConvertToObject(string key)

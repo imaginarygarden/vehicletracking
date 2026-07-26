@@ -19,4 +19,9 @@
       <ProjectReference Include="..\VehicleTracking.Application\VehicleTracking.Application.csproj" />
       <ProjectReference Include="..\VehicleTracking.Persistence\VehicleTracking.Persistence.csproj" />
     </ItemGroup>
+
+
+    <ItemGroup>
+      <AdditionalFiles Include="Components\Pages\Login.razor" />
+    </ItemGroup>
 </Project>
