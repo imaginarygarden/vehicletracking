@@ -23,6 +23,8 @@ public class EnvironmentUtilities
         {"STANDARD_ROLE", new ("User", typeof(UserRole))},
         {"ASPNETCORE_ENVIRONMENT", new("Development", typeof(DeploymentType))},
         {"ASPNETCORE_URLS", new("http://localhost:5001;https://localhost:7001", typeof(string))},
+        {"LOGIN_PATH", new("/login", typeof(string))},
+        {"UNAUTHORIZED_PATH", new("/unauthorized", typeof(string))},
     };
     
     private static object ConvertToObject(string key)

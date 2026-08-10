@@ -1,7 +1,5 @@
 ﻿using VehicleTracking.Application.Common;
 using VehicleTracking.Application.Enums;
-using VehicleTracking.Application.Exceptions.Authentication;
-using VehicleTracking.Application.Exceptions.Data;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Models;
 using VehicleTracking.Application.Models.Authentication;

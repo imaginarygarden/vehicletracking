@@ -1,6 +1,10 @@
 ﻿@page "/counter"
+
+@using Microsoft.AspNetCore.Authorization
 @using VehicleTracking.Application.Common
 @using VehicleTracking.Application.Enums
+
+@attribute [Authorize]
 
 <PageTitle>Counter</PageTitle>
 

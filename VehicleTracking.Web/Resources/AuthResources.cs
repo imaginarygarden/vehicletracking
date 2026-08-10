@@ -12,6 +12,7 @@ public static class AuthResources
     public static async Task<IResult> Login(HttpContext context, LoginRequestDto loginRequest, IAuthService authService)
     {
         var response = await authService.AuthenticateAsync(loginRequest);
+        
         return response switch
         {
             ResponseDto<UserDto>.SuccessDto successDto =>
@@ -38,6 +39,14 @@ public static class AuthResources
                 
             _ => Results.StatusCode(500)
         };
+    }
+    
+    public static async Task<IResult> Logout(HttpContext context, IAuthService authService)
+    {
+        await context.SignOutAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        return Results.Ok();
     }
     
     private static async Task<IResult> SignInUserAsync(HttpContext context, UserDto user)

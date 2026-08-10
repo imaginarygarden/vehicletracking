@@ -22,13 +22,13 @@ builder.Services.AddOpenApi();
 
 // Add db connection
 builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
-    options.UseNpgsql(EnvironmentUtilities.GetVariable<string>("CONNECTION_STRING"))
+    options.UseNpgsql(EnvironmentUtilities.GetVariable<string>("CONNECTION_STRING"), 
+        e => e.MigrationsHistoryTable("__EFMigrationsHistory"))
 );
 
 // Add user-defined services
 builder.Services.AddScoped<IDataStore, PostgresDataStore>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-// TODO: Do a proper migration
 builder.Services.AddScoped(_ => new HttpClient
 {
     BaseAddress = new Uri(EnvironmentUtilities.GetVariable<string>("ASPNETCORE_URLS").Split(";").Last())
@@ -43,11 +43,15 @@ builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/login";
-        options.LogoutPath = "/logout";
+        options.LoginPath = EnvironmentUtilities.GetVariable<string>("LOGIN_PATH");
+        options.AccessDeniedPath = EnvironmentUtilities.GetVariable<string>("UNAUTHORIZED_PATH");
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
@@ -57,7 +61,7 @@ app.UseAuthorization();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
