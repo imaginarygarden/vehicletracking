@@ -8,6 +8,7 @@ using VehicleTracking.Application.Services;
 using VehicleTracking.Persistence;
 using VehicleTracking.Web;
 using VehicleTracking.Web.Components;
+using VehicleTracking.Web.Extensions;
 
 // Ensure ASPNETCORE_ENVIRONMENT is initialized beforehand
 EnvironmentUtilities.Bootstrap();
@@ -20,6 +21,9 @@ builder.Services.AddMudServices();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Register time provider
+builder.Services.AddSingleton(TimeProvider.System);
+
 // Add db connection
 builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
     options.UseNpgsql(EnvironmentUtilities.GetVariable<string>("CONNECTION_STRING"), 
@@ -29,6 +33,7 @@ builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
 // Add user-defined services
 builder.Services.AddScoped<IDataStore, PostgresDataStore>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IVerificator, Verificator>();
 builder.Services.AddScoped(_ => new HttpClient
 {
     BaseAddress = new Uri(EnvironmentUtilities.GetVariable<string>("ASPNETCORE_URLS").Split(";").Last())
@@ -44,9 +49,10 @@ builder.Services
     .AddCookie(options =>
     {
         options.LoginPath = EnvironmentUtilities.GetVariable<string>("LOGIN_PATH");
-        options.AccessDeniedPath = EnvironmentUtilities.GetVariable<string>("UNAUTHORIZED_PATH");
-        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.AccessDeniedPath = EnvironmentUtilities.GetVariable<string>("ACCESS_DENIED_PATH");
+        options.ExpireTimeSpan = TimeSpan.FromHours(EnvironmentUtilities.GetVariable<int>("AUTH_EXPIRATION_HOURS"));
         options.SlidingExpiration = true;
+        options.Events.OnValidatePrincipal = AuthExtensions.OnValidatePrincipal;
     });
 
 builder.Services.AddAuthorization();
@@ -72,7 +78,6 @@ else
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAntiforgery();
 

@@ -2,15 +2,15 @@
 
 namespace VehicleTracking.Domain.Entities;
 
-public class Vehicle : IDbSetEntity
+public class Session : IDbSetEntityActivity
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
-    public DateOnly FirstRegistration { get; set; }
-    public required string LicensePlate { get; set; }
+    public required string UserAgent { get; set; }
+    public required string IpAddress { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-
+    public DateTime LastSeenAt { get; set; }
+    
     public User User { get; set; } = null!;
-    public ICollection<GasBill> GasBills { get; set; } = [];
 }

@@ -24,7 +24,11 @@ public class EnvironmentUtilities
         {"ASPNETCORE_ENVIRONMENT", new("Development", typeof(DeploymentType))},
         {"ASPNETCORE_URLS", new("http://localhost:5001;https://localhost:7001", typeof(string))},
         {"LOGIN_PATH", new("/login", typeof(string))},
-        {"UNAUTHORIZED_PATH", new("/unauthorized", typeof(string))},
+        {"ACCESS_DENIED_PATH", new("/access-denied", typeof(string))},
+        {"BCRYPT_FACTOR", new("12", typeof(int))},
+        {"BCRYPT_ENHANCED", new("false", typeof(bool))},
+        {"AUTH_EXPIRATION_HOURS", new("2", typeof(int))},
+        {"AUTH_REFRESH_MINUTES", new("5", typeof(int))},
     };
     
     private static object ConvertToObject(string key)

@@ -15,7 +15,7 @@ public static class EndpointRouteBuilderExtensions
         group.MapPost("/register", AuthResources.Register)
             .AllowAnonymous();
         
-        group.MapPost("/logout", AuthResources.Logout)
+        group.MapGet("/logout", AuthResources.Logout)
             .RequireAuthorization();
     }
 }

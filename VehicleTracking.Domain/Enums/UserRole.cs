@@ -2,6 +2,7 @@
 
 public enum UserRole
 {
+    Banned,
     User,
     Premium,
     Admin

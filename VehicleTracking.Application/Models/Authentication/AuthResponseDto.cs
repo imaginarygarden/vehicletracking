@@ -1,3 +1,3 @@
 ﻿namespace VehicleTracking.Application.Models.Authentication;
 
-public record UserDto(int Id, string Username, string Role);
+public record AuthResponseDto(bool Success, string Message);

@@ -1,4 +1,5 @@
-﻿using VehicleTracking.Application.Common;
+﻿using Microsoft.EntityFrameworkCore;
+using VehicleTracking.Application.Common;
 using VehicleTracking.Application.Enums;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Models;
@@ -8,36 +9,74 @@ using VehicleTracking.Domain.Enums;
 
 namespace VehicleTracking.Application.Services;
 
-public class AuthService(IDataStore dataStore) : IAuthService
+public class AuthService(IDataStore dataStore, IVerificator verificator, TimeProvider timeProvider) : IAuthService
 {
-    public async Task<ResponseDto<UserDto>> AuthenticateAsync(LoginRequestDto loginRequest)
+    public async Task<ResponseDto<SessionDto>> LoginAsync(LoginRequestDto loginRequest, SecurityInformationDto securityInformation)
     {
-        var users = await dataStore.GetAsync<User>();
-        var user = users.FirstOrDefault(e => e.Username == loginRequest.Username && e.Password == loginRequest.Password);
-
-        if (user is null)
-            return new ResponseDto<UserDto>.FailureDto(
+        var isVerified = await verificator.VerifySecurityInfoAsync(securityInformation);
+        
+        if (!isVerified)
+            return new ResponseDto<SessionDto>.FailureDto(
                 Code: ResponseCode.Unauthorized,
-                Message: "Username or password is incorrect"
+                Message: "Invalid login attempt."
+            );
+        
+        var user = await dataStore.QueryAsync<User, User?>(
+            query => query
+            .FirstOrDefaultAsync(e => e.Username == loginRequest.Username)
+        );
+
+        if (user is null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password))
+            return new ResponseDto<SessionDto>.FailureDto(
+                Code: ResponseCode.Unauthorized,
+                Message: "Invalid login attempt."
             );
 
-        return new ResponseDto<UserDto>.SuccessDto(
-            new UserDto(user.Id, user.Username, user.Role.ToString())
-        );
+        var session = await GenerateSessionAsync(user, securityInformation);
+        
+        if (session is null)
+            return new ResponseDto<SessionDto>.FailureDto(
+                Code: ResponseCode.InternalServerError,
+                Message: "Could not assign session."
+            );
+
+        return new ResponseDto<SessionDto>.SuccessDto(session);
     }
     
-    public async Task<ResponseDto<UserDto>> RegisterAsync(RegisterRequestDto registerRequest)
+    public async Task<ResponseDto<SessionDto>> RegisterAsync(RegisterRequestDto registerRequest, SecurityInformationDto securityInformation)
     {
-        var users = await dataStore.GetAsync<User>();
+        var isVerified = await verificator.VerifySecurityInfoAsync(securityInformation);
         
-        if (users.Any(e => e.Email == registerRequest.Email))
-            return new ResponseDto<UserDto>.FailureDto(
+        if (!isVerified)
+            return new ResponseDto<SessionDto>.FailureDto(
+                Code: ResponseCode.Unauthorized,
+                Message: "Invalid registration attempt."
+            );
+        
+        var passwordVerification = await verificator.VerifyPasswordAsync(registerRequest.Password);
+        
+        if (!passwordVerification)
+            return new ResponseDto<SessionDto>.FailureDto(
+                Code: ResponseCode.BadRequest,
+                Message: "Password is too weak."
+            );
+        
+        var isEmailUsed = await dataStore.QueryAsync<User, bool>(query => query
+            .AnyAsync(e => e.Email == registerRequest.Email)
+        );
+        
+        if (isEmailUsed)
+            return new ResponseDto<SessionDto>.FailureDto(
                 Code: ResponseCode.Unauthorized,
                 Message: "Email is already in use."
             );
 
-        if (users.Any(e => e.Username == registerRequest.Username))
-            return new ResponseDto<UserDto>.FailureDto(
+        var isUsernameUsed = await dataStore.QueryAsync<User, bool>(query => query
+            .AnyAsync(e => e.Username == registerRequest.Username)
+        );
+        
+        if (isUsernameUsed)
+            return new ResponseDto<SessionDto>.FailureDto(
                 Code: ResponseCode.Unauthorized,
                 Message: "Username is already in use."
             );
@@ -47,19 +86,82 @@ public class AuthService(IDataStore dataStore) : IAuthService
             {
                 Email = registerRequest.Email,
                 Username = registerRequest.Username,
-                Password = registerRequest.Password,
-                Role = EnvironmentUtilities.GetVariable<UserRole>("STANDARD_ROLE")
+                Password = BCrypt.Net.BCrypt.HashPassword(
+                    registerRequest.Password, 
+                    EnvironmentUtilities.GetVariable<int>("BCRYPT_FACTOR"),
+                    EnvironmentUtilities.GetVariable<bool>("BCRYPT_ENHANCED")
+                ),
+                Role = EnvironmentUtilities.GetVariable<UserRole>("STANDARD_ROLE"),
             }
         );
 
         if (user is null)
-            return new ResponseDto<UserDto>.FailureDto(
+            return new ResponseDto<SessionDto>.FailureDto(
                 Code: ResponseCode.InternalServerError,
                 Message: "Could not register user."
             );
+        
+        var session = await GenerateSessionAsync(user, securityInformation);
+        
+        if (session is null)
+            return new ResponseDto<SessionDto>.FailureDto(
+                Code: ResponseCode.InternalServerError,
+                Message: "Could not assign session."
+            );
 
-        return new ResponseDto<UserDto>.SuccessDto(
-            new UserDto(user.Id, user.Username, user.Role.ToString())
+        return new ResponseDto<SessionDto>.SuccessDto(session);
+    }
+    
+    public async Task<ResponseDto<SessionDto>> LogoutAsync(SessionDto session)
+    {
+        var sessionObject = await dataStore.QueryAsync<Session, Session?>(query => query
+            // .Select(e => new SessionDto(e.User.Id.ToString(), e.User.Username, e.User.Role.ToString(), e.Id.ToString()))
+            .Include(e => e.User)
+            .FirstOrDefaultAsync(e => e.Id.ToString() == session.SessionId)
         );
+
+        if (sessionObject is null)
+            return new ResponseDto<SessionDto>.FailureDto(
+                Code: ResponseCode.Unauthorized,
+                Message: "Session is incorrect."
+            );
+        
+        await dataStore.RemoveAsync(sessionObject);
+        
+        return new ResponseDto<SessionDto>.SuccessDto(session);
+    }
+
+    public async Task<SessionDto?> GenerateSessionAsync(User user, SecurityInformationDto securityInformation)
+    {
+        var session = await dataStore.AddAsync(new Session()
+        {
+            UserId = user.Id,
+            UserAgent = securityInformation.UserAgent!,
+            IpAddress = securityInformation.IpAddress!,
+        });
+
+        if (session is null)
+            return null;
+
+        return new SessionDto(user.Id.ToString(), user.Username, user.Role.ToString(), session.Id.ToString(), $"{timeProvider.GetUtcNow().ToUnixTimeSeconds()}");
+    }
+
+    public async Task<SessionDto?> RegenerateSessionAsync(SessionDto session, SecurityInformationDto securityInformation)
+    {
+        var isVerified = await verificator.VerifySecurityInfoAsync(securityInformation);
+
+        if (!isVerified)
+            return null;
+        
+        var sessionObject = await dataStore.QueryAsync<Session, Session?>(
+            query => query
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id.ToString() == session.SessionId)
+        );
+
+        if (sessionObject is null)
+            return null;
+        
+        return new SessionDto(sessionObject.UserId.ToString(), sessionObject.User.Username, sessionObject.User.Role.ToString(), sessionObject.Id.ToString(), $"{timeProvider.GetUtcNow().ToUnixTimeSeconds()}");
     }
 }

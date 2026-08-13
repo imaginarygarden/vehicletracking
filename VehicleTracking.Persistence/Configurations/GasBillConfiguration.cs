@@ -10,12 +10,11 @@ public class GasBillConfiguration : IEntityTypeConfiguration<GasBill>
     {
         builder.ToTable("GasBill");
         builder.HasKey(e => e.Id).HasName("GasBill_PK");
-        builder.Property(e => e.Id).ValueGeneratedOnAdd();
         builder.Property(e => e.Liters).IsRequired();
         builder.Property(e => e.Price).IsRequired();
         builder.Property(e => e.Mileage).IsRequired();
-        builder.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-        builder.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+        builder.Property(e => e.CreatedAt).IsRequired();
+        builder.Property(e => e.UpdatedAt).IsRequired();
 
         builder.HasOne(e => e.Vehicle)
             .WithMany(e => e.GasBills)

@@ -1,9 +1,8 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using VehicleTracking.Application.Enums;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Models;
 using VehicleTracking.Application.Models.Authentication;
+using VehicleTracking.Web.Extensions;
 
 namespace VehicleTracking.Web.Resources;
 
@@ -11,15 +10,16 @@ public static class AuthResources
 {
     public static async Task<IResult> Login(HttpContext context, LoginRequestDto loginRequest, IAuthService authService)
     {
-        var response = await authService.AuthenticateAsync(loginRequest);
+        var securityInformation = SecurityInformationDto.FromContext(context);
+        var response = await authService.LoginAsync(loginRequest, securityInformation);
         
         return response switch
         {
-            ResponseDto<UserDto>.SuccessDto successDto =>
-                await SignInUserAsync(context, successDto.Value),
+            ResponseDto<SessionDto>.SuccessDto success =>
+                await AuthExtensions.SignInUserAsync(context, success.Value),
 
-            ResponseDto<UserDto>.FailureDto failureDto =>
-                Results.StatusCode((int)failureDto.Code),
+            ResponseDto<SessionDto>.FailureDto failure =>
+                Results.Json(failure, statusCode: (int)failure.Code),
             
             _ => Results.StatusCode(500)
         };
@@ -27,42 +27,45 @@ public static class AuthResources
     
     public static async Task<IResult> Register(HttpContext context, RegisterRequestDto registerRequest, IAuthService authService)
     {
-        var response = await authService.RegisterAsync(registerRequest);
+        var securityInformation = SecurityInformationDto.FromContext(context);
+        var response = await authService.RegisterAsync(registerRequest, securityInformation);
         
         return response switch
         {
-            ResponseDto<UserDto>.SuccessDto successDto =>
-                Results.Ok(successDto.Value),
+            ResponseDto<SessionDto>.SuccessDto success =>
+                await AuthExtensions.SignInUserAsync(context, success.Value),
 
-            ResponseDto<UserDto>.FailureDto failureDto =>
-                Results.StatusCode((int)failureDto.Code),
+            ResponseDto<SessionDto>.FailureDto failure =>
+                Results.Json(failure, statusCode: (int)failure.Code),
                 
             _ => Results.StatusCode(500)
         };
     }
     
-    public static async Task<IResult> Logout(HttpContext context, IAuthService authService)
+    public static async Task<IResult> Logout(HttpContext context, IAuthService authService, IVerificator verificator)
     {
-        await context.SignOutAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme);
+        var isVerified = await verificator.VerifyClaimsAsync(context.User.Claims);
 
-        return Results.Ok();
-    }
-    
-    private static async Task<IResult> SignInUserAsync(HttpContext context, UserDto user)
-    {
-        var claims = new[]
+        if (!isVerified)
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.Role)
+            var failure = new ResponseDto<SessionDto>.FailureDto(ResponseCode.InternalServerError,
+                "Session claims could not be verified.");
+            
+            return Results.Json(failure, statusCode: (int)failure.Code);
+        }
+        
+        var session = SessionDto.FromClaims(context.User.Claims);
+        var response = await authService.LogoutAsync(session);
+        
+        return response switch
+        {
+            ResponseDto<SessionDto>.SuccessDto success =>
+                await AuthExtensions.SignOutUserAsync(context, success.Value),
+
+            ResponseDto<SessionDto>.FailureDto failure =>
+                Results.Json(failure, statusCode: (int)failure.Code),
+                
+            _ => Results.StatusCode(500)
         };
-
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await context.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme, 
-            new ClaimsPrincipal(identity));
-
-        return Results.Ok();
     }
 }
