@@ -1,3 +1,4 @@
+using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Models.Application;
@@ -18,7 +19,7 @@ public class FuelRepository(IDataStore dataStore) : IFuelRepository
                 .Where(e => e.VehicleId == vehicleId && e.Vehicle.UserId == userId)
                 .OrderByDescending(e => e.RefueledAt)
                 .ThenByDescending(e => e.CreatedAt)
-                .Select(e => FuelEntryDto.FromGasBill(e))
+                .Select(e => FuelEntryDto.FromFuelEntry(e))
                 .ToListAsync());
     }
 
@@ -29,7 +30,7 @@ public class FuelRepository(IDataStore dataStore) : IFuelRepository
             !await OwnsVehicleAsync(vehicleId, userId))
             return false;
 
-        return await dataStore.AddAsync(data.ToGasBill(vehicleId)) != null;
+        return await dataStore.AddAsync(data.ToFuelEntry(vehicleId)) != null;
     }
 
     public async Task<bool> UpdateAsync(
@@ -47,7 +48,7 @@ public class FuelRepository(IDataStore dataStore) : IFuelRepository
 
         ownedEntry.RefueledAt = data.RefueledAt;
         ownedEntry.Liters = data.Liters;
-        ownedEntry.Price = data.Price;
+        ownedEntry.TotalPrice = data.TotalPrice;
         ownedEntry.Odometer = data.Odometer;
         ownedEntry.FullTank = data.FullTank;
 
@@ -80,11 +81,11 @@ public class FuelRepository(IDataStore dataStore) : IFuelRepository
 
     private static bool IsValid(FuelEntryDataDto data)
     {
+        double.IsNaN(2);
         return data.RefueledAt != default &&
                data.Odometer is >= 0 and <= 10000000 &&
                data.Liters is > 0 and <= 10000 &&
-               data.Price is >= 0 and <= 1000000 &&
-               !double.IsNaN(data.Price) &&
-               !double.IsInfinity(data.Price);
+               data.TotalPrice is >= 0 and <= 1000000
+               ;
     }
 }

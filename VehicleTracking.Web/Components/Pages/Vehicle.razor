@@ -195,7 +195,7 @@
                         <MudTd DataLabel="Date">@context.Entry.RefueledAt.ToLocalTime().ToString("dd.MM.yyyy")</MudTd>
                         <MudTd DataLabel="Odometer">@context.Entry.Odometer.ToString("N0") km</MudTd>
                         <MudTd DataLabel="Liters">@context.Entry.Liters.ToString("N0") L</MudTd>
-                        <MudTd DataLabel="Total price">@context.Entry.Price.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Total price">@context.Entry.TotalPrice.ToString("N2")</MudTd>
                         <MudTd DataLabel="Price/liter">@FormatPricePerLiter(context.Entry)</MudTd>
                         <MudTd DataLabel="Consumption">@FormatValue(context.Consumption, "L/100 km")</MudTd>
                     </RowTemplate>
@@ -369,6 +369,6 @@
 
     private static string FormatPricePerLiter(FuelEntryDto entry)
     {
-        return entry.Liters > 0 ? $"{entry.Price / entry.Liters:N2}" : "—";
+        return entry.Liters > 0 ? $"{entry.TotalPrice / entry.Liters:N2}" : "—";
     }
 }

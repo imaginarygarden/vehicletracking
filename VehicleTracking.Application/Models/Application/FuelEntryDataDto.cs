@@ -4,19 +4,19 @@ namespace VehicleTracking.Application.Models.Application;
 
 public record FuelEntryDataDto(
     DateTime RefueledAt,
-    int Liters,
-    double Price,
+    decimal Liters,
+    decimal TotalPrice,
     int Odometer,
     bool FullTank)
 {
-    public FuelEntry ToGasBill(Guid vehicleId)
+    public FuelEntry ToFuelEntry(Guid vehicleId)
     {
         return new FuelEntry
         {
             VehicleId = vehicleId,
             RefueledAt = RefueledAt,
             Liters = Liters,
-            Price = Price,
+            TotalPrice = TotalPrice,
             Odometer = Odometer,
             FullTank = FullTank
         };

@@ -11,8 +11,8 @@ public class FuelEntryConfiguration : IEntityTypeConfiguration<FuelEntry>
         builder.ToTable("FuelEntry");
         builder.HasKey(e => e.Id).HasName("FuelEntry_PK");
         builder.Property(e => e.RefueledAt).IsRequired();
-        builder.Property(e => e.Liters).IsRequired();
-        builder.Property(e => e.Price).IsRequired();
+        builder.Property(e => e.Liters).HasPrecision(10, 3).IsRequired();
+        builder.Property(e => e.TotalPrice).HasPrecision(12, 3).IsRequired();
         builder.Property(e => e.Odometer).IsRequired();
         builder.Property(e => e.FullTank).IsRequired();
         builder.Property(e => e.CreatedAt).IsRequired();

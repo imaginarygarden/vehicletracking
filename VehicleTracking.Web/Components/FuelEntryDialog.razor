@@ -26,7 +26,7 @@
                                  Max="10000000"
                                  Required="true" />
 
-                <MudNumericField T="int"
+                <MudNumericField T="decimal"
                                  @bind-Value="_liters"
                                  Label="Liters"
                                  Variant="Variant.Outlined"
@@ -34,7 +34,7 @@
                                  Max="10000"
                                  Required="true" />
 
-                <MudNumericField T="double"
+                <MudNumericField T="decimal"
                                  @bind-Value="_price"
                                  Label="Total price"
                                  Variant="Variant.Outlined"
@@ -88,8 +88,8 @@
     private MudForm? _form;
     private DateTime? _refueledAt = DateTime.Today;
     private int _odometer;
-    private int _liters;
-    private double _price;
+    private decimal _liters;
+    private decimal _price;
     private bool _fullTank = true;
 
     protected override void OnInitialized()
@@ -100,7 +100,7 @@
         _refueledAt = FuelEntry.RefueledAt.ToLocalTime();
         _odometer = FuelEntry.Odometer;
         _liters = FuelEntry.Liters;
-        _price = FuelEntry.Price;
+        _price = FuelEntry.TotalPrice;
         _fullTank = FuelEntry.FullTank;
     }
 

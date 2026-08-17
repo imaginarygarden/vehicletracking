@@ -12,18 +12,18 @@ public class FuelCalculationService : IFuelCalculationService
             .ThenBy(e => e.CreatedAt)
             .ToList();
 
-        var totalLiters = orderedEntries.Sum(e => (double)e.Liters);
-        var totalFuelCost = orderedEntries.Sum(e => e.Price);
+        var totalLiters = orderedEntries.Sum(e => e.Liters);
+        var totalFuelCost = orderedEntries.Sum(e => e.TotalPrice);
         var entryStatistics = new List<FuelEntryStatisticsDto>(orderedEntries.Count);
 
         FuelEntryDto? previousFullTank = null;
-        double litersSincePreviousFullTank = 0;
-        double consumptionLiters = 0;
+        decimal litersSincePreviousFullTank = 0;
+        decimal consumptionLiters = 0;
         int consumptionDistance = 0;
 
         foreach (var entry in orderedEntries)
         {
-            double? consumption = null;
+            decimal? consumption = null;
 
             if (previousFullTank != null)
                 litersSincePreviousFullTank += entry.Liters;
@@ -45,7 +45,7 @@ public class FuelCalculationService : IFuelCalculationService
                 litersSincePreviousFullTank = 0;
             }
 
-            entryStatistics.Add(new FuelEntryStatisticsDto(entry, consumption));
+            entryStatistics.Add(new FuelEntryStatisticsDto(entry, (double?)consumption));
         }
 
         int? totalDistance = null;
@@ -56,22 +56,22 @@ public class FuelCalculationService : IFuelCalculationService
                 totalDistance = distance;
         }
 
-        double? averageFuelPrice = totalLiters > 0 ? totalFuelCost / totalLiters : null;
-        double? averageConsumption = consumptionDistance > 0
+        decimal? averageFuelPrice = totalLiters > 0 ? totalFuelCost / totalLiters : null;
+        decimal? averageConsumption = consumptionDistance > 0
             ? consumptionLiters / consumptionDistance * 100
             : null;
-        double? costPerKilometer = totalDistance > 0 ? totalFuelCost / totalDistance.Value : null;
+        decimal? costPerKilometer = totalDistance > 0 ? totalFuelCost / totalDistance.Value : null;
 
         return new FuelStatisticsDto(
             entryStatistics
                 .OrderByDescending(e => e.Entry.RefueledAt)
                 .ThenByDescending(e => e.Entry.CreatedAt)
                 .ToList(),
-            totalLiters,
-            totalFuelCost,
+            (double)totalLiters,
+            (double)totalFuelCost,
             totalDistance,
-            averageFuelPrice,
-            averageConsumption,
-            costPerKilometer);
+            (double?)averageFuelPrice,
+            (double?)averageConsumption,
+            (double?)costPerKilometer);
     }
 }

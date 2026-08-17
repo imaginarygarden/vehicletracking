@@ -5,26 +5,26 @@ namespace VehicleTracking.Application.Models.Application;
 public record FuelEntryDto(
     Guid Id, 
     DateTime RefueledAt,
-    int Liters, 
-    double Price, 
+    decimal Liters, 
+    decimal TotalPrice,
     int Odometer, 
     bool FullTank,
     DateTime CreatedAt, 
     DateTime UpdatedAt)
 {
-    public static FuelEntryDto FromGasBill(FuelEntry fuelEntry)
+    public static FuelEntryDto FromFuelEntry(FuelEntry fuelEntry)
     {
-        return new FuelEntryDto(fuelEntry.Id, fuelEntry.RefueledAt, fuelEntry.Liters, fuelEntry.Price, fuelEntry.Odometer, fuelEntry.FullTank, fuelEntry.CreatedAt, fuelEntry.UpdatedAt);
+        return new FuelEntryDto(fuelEntry.Id, fuelEntry.RefueledAt, fuelEntry.Liters, fuelEntry.TotalPrice, fuelEntry.Odometer, fuelEntry.FullTank, fuelEntry.CreatedAt, fuelEntry.UpdatedAt);
     }
 
-    public FuelEntry ToGasBill(VehicleDto? vehicle = null)
+    public FuelEntry ToFuelEntry(VehicleDto? vehicle = null)
     {
         var result = new FuelEntry()
         {
             Id = Id,
             RefueledAt =  RefueledAt,
             Liters = Liters,
-            Price = Price,
+            TotalPrice = TotalPrice,
             Odometer = Odometer,
             FullTank = FullTank,
             CreatedAt = CreatedAt,

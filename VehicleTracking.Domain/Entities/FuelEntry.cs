@@ -7,8 +7,8 @@ public class FuelEntry : IEntity
     public Guid Id { get; set; }
     public Guid VehicleId { get; set; }
     public DateTime RefueledAt { get; set; }
-    public int Liters { get; set; }
-    public double Price { get; set; }
+    public decimal Liters { get; set; }
+    public decimal TotalPrice { get; set; }
     public int Odometer { get; set; }
     public bool FullTank { get; set; }
     public DateTime CreatedAt { get; set; }
