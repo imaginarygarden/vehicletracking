@@ -3,6 +3,7 @@ using dotenv.net;
 using VehicleTracking.Application.Enums;
 using VehicleTracking.Application.Exceptions.Environment;
 using VehicleTracking.Application.Models;
+using VehicleTracking.Application.Models.Environment;
 using VehicleTracking.Domain.Enums;
 
 namespace VehicleTracking.Application.Common;
@@ -25,10 +26,12 @@ public class EnvironmentUtilities
         {"ASPNETCORE_URLS", new("http://localhost:5001;https://localhost:7001", typeof(string))},
         {"LOGIN_PATH", new("/login", typeof(string))},
         {"ACCESS_DENIED_PATH", new("/access-denied", typeof(string))},
+        {"NOT_FOUND_PATH", new("/not-found", typeof(string))},
         {"BCRYPT_FACTOR", new("12", typeof(int))},
         {"BCRYPT_ENHANCED", new("false", typeof(bool))},
         {"AUTH_EXPIRATION_HOURS", new("2", typeof(int))},
         {"AUTH_REFRESH_MINUTES", new("5", typeof(int))},
+        {"AUTH_PASSWORD_MIN_STRENGTH", new("50", typeof(int))},
     };
     
     private static object ConvertToObject(string key)

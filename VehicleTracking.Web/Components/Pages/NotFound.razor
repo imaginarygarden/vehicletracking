@@ -1,0 +1,47 @@
+﻿@page "/not-found"
+
+<PageTitle>Page not found</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium"
+              Class="d-flex align-center justify-center"
+              Style="min-height: 85vh;">
+
+    <MudStack AlignItems="AlignItems.Center"
+              Justify="Justify.Center"
+              Spacing="3"
+              Class="text-center">
+
+        <MudText Typo="Typo.h1"
+                 Color="Color.Primary"
+                 Class="font-weight-bold"
+                 Style="font-size: 8rem; line-height: 1;">
+            404
+        </MudText>
+
+        <MudIcon Icon="@Icons.Material.Filled.ExploreOff"
+                 Color="Color.Secondary"
+                 Size="Size.Large"
+                 Class="mb-2" />
+
+        <MudText Typo="Typo.h4">
+            We couldn't find that page
+        </MudText>
+
+        <MudText Typo="Typo.body1"
+                 Color="Color.Secondary"
+                 Style="max-width: 500px;">
+            The page you're looking for doesn't exist or may have been moved.
+            Check the URL or head back to the home page.
+        </MudText>
+
+        <MudButton Href="/"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Size="Size.Large"
+                   StartIcon="@Icons.Material.Filled.Home"
+                   Class="mt-4 px-6">
+            Back to Home
+        </MudButton>
+
+    </MudStack>
+</MudContainer>

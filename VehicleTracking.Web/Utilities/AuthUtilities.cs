@@ -1,13 +1,16 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using VehicleTracking.Application.Common;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Models.Authentication;
+using VehicleTracking.Domain.Enums;
+using VehicleTracking.Web.Extensions;
 
-namespace VehicleTracking.Web.Extensions;
+namespace VehicleTracking.Web.Utilities;
 
-public static class AuthExtensions
+public static class AuthUtilities
 {
     public static async Task OnValidatePrincipal(
         CookieValidatePrincipalContext context)
@@ -23,20 +26,16 @@ public static class AuthExtensions
         var timeProvider =
             context.HttpContext.RequestServices
                 .GetRequiredService<TimeProvider>();
-        
 
-        var isVerified = await verificator.VerifyClaimsAsync(context.Principal?.Claims);
-        
-        if (isVerified)
+        if (context.Principal != null && context.Principal?.GetSession() is { } currentSession)
         {
-            var currentSession = SessionDto.FromClaims(context.Principal!.Claims);
             var issuedAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(currentSession.IssuedAt)).UtcDateTime;
             
             if (timeProvider.GetUtcNow() - issuedAt <
                 TimeSpan.FromMinutes(EnvironmentUtilities.GetVariable<int>("AUTH_REFRESH_MINUTES")))
                 return;
             
-            var securityInformation = SecurityInformationDto.FromContext(context.HttpContext);
+            var securityInformation = context.HttpContext.GetSecurityInformation();
             
             var response = await authService.RegenerateSessionAsync(
                 currentSession, securityInformation);
@@ -53,9 +52,6 @@ public static class AuthExtensions
         }
         
         context.RejectPrincipal();
-        //
-        // await context.HttpContext.SignOutAsync(
-        //     CookieAuthenticationDefaults.AuthenticationScheme);
     }
     
     public static async Task<IResult> SignInUserAsync(HttpContext context, SessionDto session)
@@ -68,11 +64,12 @@ public static class AuthExtensions
         return Results.Ok();
     }
     
-    public static async Task<IResult> SignOutUserAsync(HttpContext context, SessionDto session)
+    public static async Task<IResult> SignOutUserAsync(HttpContext context, IResult result)
     {
         await context.SignOutAsync(
             CookieAuthenticationDefaults.AuthenticationScheme);
 
-        return Results.Ok();
+        return result;
     }
+
 }

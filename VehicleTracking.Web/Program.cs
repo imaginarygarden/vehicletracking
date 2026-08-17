@@ -6,9 +6,9 @@ using VehicleTracking.Application.Common;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Services;
 using VehicleTracking.Persistence;
-using VehicleTracking.Web;
 using VehicleTracking.Web.Components;
 using VehicleTracking.Web.Extensions;
+using VehicleTracking.Web.Utilities;
 
 // Ensure ASPNETCORE_ENVIRONMENT is initialized beforehand
 EnvironmentUtilities.Bootstrap();
@@ -34,6 +34,9 @@ builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
 builder.Services.AddScoped<IDataStore, PostgresDataStore>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IVerificator, Verificator>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<IFuelRepository, FuelRepository>();
+builder.Services.AddSingleton<IFuelCalculationService, FuelCalculationService>();
 builder.Services.AddScoped(_ => new HttpClient
 {
     BaseAddress = new Uri(EnvironmentUtilities.GetVariable<string>("ASPNETCORE_URLS").Split(";").Last())
@@ -52,10 +55,14 @@ builder.Services
         options.AccessDeniedPath = EnvironmentUtilities.GetVariable<string>("ACCESS_DENIED_PATH");
         options.ExpireTimeSpan = TimeSpan.FromHours(EnvironmentUtilities.GetVariable<int>("AUTH_EXPIRATION_HOURS"));
         options.SlidingExpiration = true;
-        options.Events.OnValidatePrincipal = AuthExtensions.OnValidatePrincipal;
+        options.Events.OnValidatePrincipal = AuthUtilities.OnValidatePrincipal;
     });
 
-builder.Services.AddAuthorization();
+// Register access policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicies();
+});
 
 builder.Services.AddCascadingAuthenticationState();
 
@@ -76,6 +83,8 @@ else
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+app.UseStatusCodePagesWithReExecute(EnvironmentUtilities.GetVariable<string>("NOT_FOUND_PATH"));
 
 app.UseHttpsRedirection();
 

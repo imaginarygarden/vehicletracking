@@ -54,7 +54,6 @@
 </div>
 
 @code {
-    private bool _logoutLoading = false;
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
@@ -73,25 +72,19 @@
     
     private async Task HandleLogout()
     {
-        _logoutLoading = true;
-
         var response = await JSRuntime.InvokeAsync<AuthResponseDto>(
             "window.logout"
         );
         
-        if (response.Success)
-        {
-            NavigationManager.NavigateTo(
-                "/",
-                forceLoad: true
-            );
-        }
-        else
+        if (!response.Success)
         {
             Snackbar.Add(response.Message, Severity.Error);
         }
         
-        _logoutLoading = false;
+        NavigationManager.NavigateTo(
+            "/",
+            forceLoad: true
+        );
     }
 
     private void DrawerToggle()

@@ -5,5 +5,6 @@ public enum UserRole
     Banned,
     User,
     Premium,
+    Moderator,
     Admin
 }

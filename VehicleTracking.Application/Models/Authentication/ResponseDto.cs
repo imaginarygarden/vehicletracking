@@ -1,6 +1,6 @@
 using VehicleTracking.Application.Enums;
 
-namespace VehicleTracking.Application.Models;
+namespace VehicleTracking.Application.Models.Authentication;
 
 public abstract record ResponseDto<T>()
 {

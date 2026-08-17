@@ -1,0 +1,190 @@
+﻿@page "/vehicles"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using VehicleTracking.Application.Interfaces
+@using VehicleTracking.Application.Models.Application
+@using VehicleTracking.Application.Models.Authentication
+@using VehicleTracking.Web.Extensions
+
+@inject IVehicleRepository VehicleRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+@attribute [Authorize(Policy = "NotBannedAndAuthorized")]
+
+<PageTitle>Vehicles</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Justify="Justify.SpaceBetween"
+              Class="mb-6">
+
+        <div>
+            <MudText Typo="Typo.h4" Class="font-weight-bold">
+                Vehicles
+            </MudText>
+
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Manage your registered vehicles.
+            </MudText>
+        </div>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="() => SaveVehicle()">
+            Add vehicle
+        </MudButton>
+
+    </MudStack>
+
+    @if (_loading)
+    {
+        <MudPaper Class="pa-20">
+            <MudStack Justify="Justify.Center" Row="true" Spacing="2">
+                <MudProgressCircular Color="Color.Default" Indeterminate="true"/>
+            </MudStack>
+        </MudPaper>
+    }
+    else if (_vehicles.Count == 0)
+    {
+        <MudPaper Class="pa-10 text-center">
+
+            <MudIcon Icon="@Icons.Material.Filled.DirectionsCar"
+                     Size="Size.Large"
+                     Color="Color.Secondary"
+                     Class="mb-4" />
+
+            <MudText Typo="Typo.h6" Class="mb-2">
+                No vehicles yet
+            </MudText>
+
+            <MudText Typo="Typo.body2"
+                     Color="Color.Secondary"
+                     Class="mb-5">
+                Add your first vehicle to get started.
+            </MudText>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="() => SaveVehicle()">
+                Add vehicle
+            </MudButton>
+
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Elevation="2">
+
+            <MudTable Items="_vehicles"
+                      Hover="true"
+                      Dense="false"
+                      Breakpoint="Breakpoint.Sm"
+                      RowClass="cursor-pointer"
+                      OnRowClick="@((TableRowClickEventArgs<VehicleDto> args) => OnRowClick(args))"
+                      >
+
+                <HeaderContent>
+                    <MudTh>License plate</MudTh>
+                    <MudTh>First registration</MudTh>
+                    <MudTh>Created</MudTh>
+                    <MudTh>Last updated</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd DataLabel="License plate">
+                        <MudText Typo="Typo.body1"
+                                 Class="font-weight-medium">
+                            @context.LicensePlate
+                        </MudText>
+                    </MudTd>
+
+                    <MudTd DataLabel="First registration">
+                        @context.FirstRegistration.ToString("dd.MM.yyyy")
+                    </MudTd>
+
+                    <MudTd DataLabel="Created">
+                        @context.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                    </MudTd>
+
+                    <MudTd DataLabel="Last updated">
+                        @context.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                    </MudTd>
+                </RowTemplate>
+
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50 }"
+                                   RowsPerPageString="Vehicles per page"
+                                   HideRowsPerPage="false" />
+                </PagerContent>
+
+            </MudTable>
+
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+
+    private ICollection<VehicleDto> _vehicles = new List<VehicleDto>();
+    private SessionDto _session = null!;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        _session = authState.User.GetSession()!;
+        _vehicles = await VehicleRepository.GetForUserAsync(_session);
+        _loading = false;
+
+        await base.OnInitializedAsync();
+    }
+
+    private void OnRowClick(TableRowClickEventArgs<VehicleDto> args)
+    {
+        if (args.Item != null)
+            NavigationManager.NavigateTo($"/vehicles/{args.Item.Id}");
+    }
+
+    private async Task SaveVehicle()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(VehicleDialog.Session), _session },
+        };
+        
+        var options = new DialogOptions() 
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<VehicleDialog>(
+            "Add vehicle",
+            parameters,
+            options);
+
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            await ReloadVehicles();
+        }
+    }
+    
+    private async Task ReloadVehicles()
+    {
+        _vehicles = await VehicleRepository.GetForUserAsync(_session);
+        StateHasChanged();
+    }
+}

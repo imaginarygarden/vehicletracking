@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using VehicleTracking.Web.Resources;
+﻿using VehicleTracking.Web.Resources;
 
-namespace VehicleTracking.Web;
+namespace VehicleTracking.Web.Extensions;
 
 public static class EndpointRouteBuilderExtensions
 {

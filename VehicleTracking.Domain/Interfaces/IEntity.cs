@@ -1,6 +1,6 @@
-﻿namespace VehicleTracking.Application.Interfaces;
+﻿namespace VehicleTracking.Domain.Interfaces;
 
-public interface IDbSetEntity
+public interface IEntity
 {
     public Guid Id { get; set; }
     public DateTime CreatedAt { get; set; }

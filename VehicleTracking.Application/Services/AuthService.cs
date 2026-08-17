@@ -2,7 +2,6 @@
 using VehicleTracking.Application.Common;
 using VehicleTracking.Application.Enums;
 using VehicleTracking.Application.Interfaces;
-using VehicleTracking.Application.Models;
 using VehicleTracking.Application.Models.Authentication;
 using VehicleTracking.Domain.Entities;
 using VehicleTracking.Domain.Enums;
@@ -53,12 +52,12 @@ public class AuthService(IDataStore dataStore, IVerificator verificator, TimePro
                 Message: "Invalid registration attempt."
             );
         
-        var passwordVerification = await verificator.VerifyPasswordAsync(registerRequest.Password);
+        var passwordVerification = verificator.VerifyPassword(registerRequest.Password);
         
-        if (!passwordVerification)
+        if (!passwordVerification.Success)
             return new ResponseDto<SessionDto>.FailureDto(
                 Code: ResponseCode.BadRequest,
-                Message: "Password is too weak."
+                Message: passwordVerification.Suggestions
             );
         
         var isEmailUsed = await dataStore.QueryAsync<User, bool>(query => query
@@ -115,9 +114,8 @@ public class AuthService(IDataStore dataStore, IVerificator verificator, TimePro
     public async Task<ResponseDto<SessionDto>> LogoutAsync(SessionDto session)
     {
         var sessionObject = await dataStore.QueryAsync<Session, Session?>(query => query
-            // .Select(e => new SessionDto(e.User.Id.ToString(), e.User.Username, e.User.Role.ToString(), e.Id.ToString()))
             .Include(e => e.User)
-            .FirstOrDefaultAsync(e => e.Id.ToString() == session.SessionId)
+            .FirstOrDefaultAsync(e => e.Id == Guid.Parse(session.SessionId))
         );
 
         if (sessionObject is null)
@@ -139,11 +137,16 @@ public class AuthService(IDataStore dataStore, IVerificator verificator, TimePro
             UserAgent = securityInformation.UserAgent!,
             IpAddress = securityInformation.IpAddress!,
         });
-
-        if (session is null)
+        
+        if (session is null || await dataStore.QueryAsync<Session, Session?>(
+                query => query
+                    .Include(e => e.User)
+                    .FirstOrDefaultAsync(e => e.Id == session.Id)) 
+                is not { } sessionObject
+            )
             return null;
 
-        return new SessionDto(user.Id.ToString(), user.Username, user.Role.ToString(), session.Id.ToString(), $"{timeProvider.GetUtcNow().ToUnixTimeSeconds()}");
+        return SessionDto.FromSession(sessionObject, timeProvider);
     }
 
     public async Task<SessionDto?> RegenerateSessionAsync(SessionDto session, SecurityInformationDto securityInformation)
@@ -156,12 +159,12 @@ public class AuthService(IDataStore dataStore, IVerificator verificator, TimePro
         var sessionObject = await dataStore.QueryAsync<Session, Session?>(
             query => query
                 .Include(e => e.User)
-                .FirstOrDefaultAsync(e => e.Id.ToString() == session.SessionId)
+                .FirstOrDefaultAsync(e => e.Id == Guid.Parse(session.SessionId))
         );
 
         if (sessionObject is null)
             return null;
         
-        return new SessionDto(sessionObject.UserId.ToString(), sessionObject.User.Username, sessionObject.User.Role.ToString(), sessionObject.Id.ToString(), $"{timeProvider.GetUtcNow().ToUnixTimeSeconds()}");
+        return SessionDto.FromSession(sessionObject, timeProvider);
     }
 }

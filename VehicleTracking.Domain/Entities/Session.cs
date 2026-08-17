@@ -1,8 +1,9 @@
-﻿using VehicleTracking.Application.Interfaces;
+﻿
+using VehicleTracking.Domain.Interfaces;
 
 namespace VehicleTracking.Domain.Entities;
 
-public class Session : IDbSetEntityActivity
+public class Session : ITrackedEntity
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }

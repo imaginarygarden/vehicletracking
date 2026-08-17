@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Domain.Entities;
+using VehicleTracking.Domain.Interfaces;
 
 namespace VehicleTracking.Persistence;
 
@@ -10,13 +10,13 @@ public class VehicleTrackingDbContext(DbContextOptions<VehicleTrackingDbContext>
     public DbSet<User> User => Set<User>();
     public DbSet<Session> Session => Set<Session>();
     public DbSet<Vehicle> Vehicle => Set<Vehicle>();
-    public DbSet<GasBill> GasBill => Set<GasBill>();
+    public DbSet<FuelEntry> FuelEntry => Set<FuelEntry>();
 
     private void UpdateTimestamps()
     {
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;
 
-        foreach (var entry in ChangeTracker.Entries<IDbSetEntity>())
+        foreach (var entry in ChangeTracker.Entries<IEntity>())
         {
             switch (entry.State)
             {
@@ -25,7 +25,7 @@ public class VehicleTrackingDbContext(DbContextOptions<VehicleTrackingDbContext>
                     entry.Entity.CreatedAt = utcNow;
                     entry.Entity.UpdatedAt = utcNow;
                     
-                    if (entry.Entity is IDbSetEntityActivity activity)
+                    if (entry.Entity is ITrackedEntity activity)
                         activity.LastSeenAt = utcNow;
                     
                     break;

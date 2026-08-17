@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using VehicleTracking.Domain.Entities;
 using VehicleTracking.Domain.Enums;
 
 namespace VehicleTracking.Application.Models.Authentication;
@@ -15,18 +16,10 @@ public record SessionDto(string UserId, string Username, string Role, string Ses
             new Claim(ClaimTypes.DateOfBirth, IssuedAt),
         };
 
-    public static SessionDto Dummy => new SessionDto("dummy", "dummy", "User", "dummy", "1786630651");
+    public static SessionDto Dummy => new ("dummy", "dummy", "User", "dummy", "1786630651");
 
-    public static SessionDto FromClaims(IEnumerable<Claim> claims)
+    public static SessionDto FromSession(Session session, TimeProvider timeProvider)
     {
-        var enumerable = claims as Claim[] ?? claims.ToArray();
-        
-        var userId = enumerable.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
-        var username = enumerable.First(c => c.Type == ClaimTypes.Name).Value;
-        var role = enumerable.First(c => c.Type == ClaimTypes.Role).Value;
-        var sessionId = enumerable.First(c => c.Type == ClaimTypes.SerialNumber).Value;
-        var issuedAt = enumerable.First(c => c.Type == ClaimTypes.DateOfBirth).Value;
-        
-        return new SessionDto(userId, username, role, sessionId, issuedAt);
+        return new SessionDto(session.UserId.ToString(), session.User.Username, session.User.Role.ToString(), session.Id.ToString(), $"{timeProvider.GetUtcNow().ToUnixTimeSeconds()}");
     }
 }
