@@ -14,7 +14,7 @@
     {
         return @<text>
                     @{
-                        Snackbar.Add($"An error occurred: {exception.Message}", Severity.Error);
+                        Snackbar.Add($"Something went wrong. Please try again.", Severity.Error);
                         StateHasChanged();
                         _errorBoundary?.Recover();
                     }

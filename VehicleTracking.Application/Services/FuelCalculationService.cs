@@ -45,7 +45,7 @@ public class FuelCalculationService : IFuelCalculationService
                 litersSincePreviousFullTank = 0;
             }
 
-            entryStatistics.Add(new FuelEntryStatisticsDto(entry, (double?)consumption));
+            entryStatistics.Add(new FuelEntryStatisticsDto(entry, consumption));
         }
 
         int? totalDistance = null;
@@ -67,11 +67,11 @@ public class FuelCalculationService : IFuelCalculationService
                 .OrderByDescending(e => e.Entry.RefueledAt)
                 .ThenByDescending(e => e.Entry.CreatedAt)
                 .ToList(),
-            (double)totalLiters,
-            (double)totalFuelCost,
+            totalLiters,
+            totalFuelCost,
             totalDistance,
-            (double?)averageFuelPrice,
-            (double?)averageConsumption,
-            (double?)costPerKilometer);
+            averageFuelPrice,
+            averageConsumption,
+            costPerKilometer);
     }
 }

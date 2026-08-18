@@ -6,7 +6,6 @@ using VehicleTracking.Application.Models.Authentication;
 
 namespace VehicleTracking.Application.Services;
 
-// TODO: run IP, UA against public databases and log them for future threat responses
 public class Verificator(IDataStore dataStore, TimeProvider timeProvider) : IVerificator
 {
     private DeploymentType _deploymentType = 
@@ -14,6 +13,7 @@ public class Verificator(IDataStore dataStore, TimeProvider timeProvider) : IVer
     private int _passwordMinStrength = 
         EnvironmentUtilities.GetVariable<int>("AUTH_PASSWORD_MIN_STRENGTH");
     
+    // TODO: run IP, UA against public/private databases and log them
     private async Task<bool> VerifyUserAgentAsync(string? userAgent)
     {
         return true;

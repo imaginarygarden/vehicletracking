@@ -27,7 +27,7 @@ public static class AuthUtilities
             context.HttpContext.RequestServices
                 .GetRequiredService<TimeProvider>();
 
-        if (context.Principal != null && context.Principal?.GetSession() is { } currentSession)
+        if (context.Principal?.GetSession() is { } currentSession)
         {
             var issuedAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(currentSession.IssuedAt)).UtcDateTime;
             

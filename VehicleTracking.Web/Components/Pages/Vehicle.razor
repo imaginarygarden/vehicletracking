@@ -357,7 +357,7 @@
         NavigationManager.NavigateTo("/vehicles");
     }
 
-    private static string FormatValue(double? value, string suffix)
+    private static string FormatValue(decimal? value, string suffix)
     {
         return value.HasValue ? $"{value.Value:N2}{(suffix.Length > 0 ? $" {suffix}" : string.Empty)}" : "—";
     }

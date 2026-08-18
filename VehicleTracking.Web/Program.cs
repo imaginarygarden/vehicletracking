@@ -68,6 +68,15 @@ builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
+// Apply pending migrations so a fresh containerized database is ready to use.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContextFactory = scope.ServiceProvider
+        .GetRequiredService<IDbContextFactory<VehicleTrackingDbContext>>();
+    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+    await dbContext.Database.MigrateAsync();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 

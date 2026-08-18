@@ -1,12 +1,12 @@
 namespace VehicleTracking.Application.Models.Application;
 
-public record FuelEntryStatisticsDto(FuelEntryDto Entry, double? Consumption);
+public record FuelEntryStatisticsDto(FuelEntryDto Entry, decimal? Consumption);
 
 public record FuelStatisticsDto(
     IReadOnlyCollection<FuelEntryStatisticsDto> Entries,
-    double TotalLiters,
-    double TotalFuelCost,
+    decimal TotalLiters,
+    decimal TotalFuelCost,
     int? TotalDistance,
-    double? AverageFuelPricePerLiter,
-    double? AverageConsumption,
-    double? CostPerKilometer);
+    decimal? AverageFuelPricePerLiter,
+    decimal? AverageConsumption,
+    decimal? CostPerKilometer);
