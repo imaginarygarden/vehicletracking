@@ -5,7 +5,7 @@ delivery dates. Discuss substantial items in an issue before implementation.
 
 ## Release blockers
 
-- [ ] Select and add an open-source `LICENSE`.
+- [x] Select and add an open-source `LICENSE`.
 - [ ] Add a formal `CODE_OF_CONDUCT.md` and security-reporting policy.
 - [ ] Add automated unit and integration test projects.
 - [ ] Test clean install, upgrade, backup, and restore paths.
