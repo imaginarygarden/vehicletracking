@@ -1,6 +1,5 @@
 ﻿using System.Security.Claims;
 using VehicleTracking.Domain.Entities;
-using VehicleTracking.Domain.Enums;
 
 namespace VehicleTracking.Application.Models.Authentication;
 

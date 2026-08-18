@@ -13,11 +13,11 @@ public static class ClaimsPrincipalExtensions
         var isAnyNull = enumerable.Any(c => string.IsNullOrWhiteSpace(c.Value));
         
         var dummyClaims = SessionDto.Dummy.Claims;
-        var isMatchedOrDefault = enumerable?.All(i => dummyClaims.Any(j => j.Type == i.Type)) ?? false;
+        var isMatchedOrDefault = enumerable.All(i => dummyClaims.Any(j => j.Type == i.Type));
 
         var isVerified = !isAnyNull && isMatchedOrDefault;
 
-        if (isVerified && enumerable != null)
+        if (isVerified)
         {
             var userId = enumerable.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var username = enumerable.First(c => c.Type == ClaimTypes.Name).Value;

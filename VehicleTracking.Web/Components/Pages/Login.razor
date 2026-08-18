@@ -8,7 +8,7 @@
 
 @attribute [AllowAnonymous]
 
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
@@ -83,9 +83,9 @@
 @code {
     private LoginModel _model = new();
 
-    private bool _loading = false;
-    private string? _error = null;
-    private string? _returnUrl = null;
+    private bool _loading;
+    private string? _error;
+    private string? _returnUrl;
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,7 +112,7 @@
         _loading = true;
         _error = null;
 
-        var response = await JSRuntime.InvokeAsync<AuthResponseDto>(
+        var response = await JsRuntime.InvokeAsync<AuthResponseDto>(
             "window.login",
             _model.Username,
             _model.Password
@@ -127,7 +127,7 @@
         }
         else
         {
-            _error = response.Message ?? "Invalid username or password.";
+            _error = response.Message;
         }
         
         _loading = false;

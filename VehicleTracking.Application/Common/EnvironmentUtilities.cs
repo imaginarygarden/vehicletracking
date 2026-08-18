@@ -2,7 +2,6 @@
 using dotenv.net;
 using VehicleTracking.Application.Enums;
 using VehicleTracking.Application.Exceptions.Environment;
-using VehicleTracking.Application.Models;
 using VehicleTracking.Application.Models.Environment;
 using VehicleTracking.Domain.Enums;
 

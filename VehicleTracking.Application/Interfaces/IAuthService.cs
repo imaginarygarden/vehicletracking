@@ -1,6 +1,4 @@
-﻿using System.Security.Claims;
-using VehicleTracking.Application.Models;
-using VehicleTracking.Application.Models.Authentication;
+﻿using VehicleTracking.Application.Models.Authentication;
 using VehicleTracking.Domain.Entities;
 
 namespace VehicleTracking.Application.Interfaces;

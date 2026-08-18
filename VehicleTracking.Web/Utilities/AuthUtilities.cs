@@ -1,11 +1,9 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 using VehicleTracking.Application.Common;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Models.Authentication;
-using VehicleTracking.Domain.Enums;
 using VehicleTracking.Web.Extensions;
 
 namespace VehicleTracking.Web.Utilities;
@@ -18,10 +16,6 @@ public static class AuthUtilities
         var authService =
             context.HttpContext.RequestServices
                 .GetRequiredService<IAuthService>();
-        
-        var verificator =
-            context.HttpContext.RequestServices
-                .GetRequiredService<IVerificator>();
         
         var timeProvider =
             context.HttpContext.RequestServices

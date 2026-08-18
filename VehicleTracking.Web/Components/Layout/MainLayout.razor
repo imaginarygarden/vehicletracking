@@ -3,7 +3,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using VehicleTracking.Application.Models.Authentication
 
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
@@ -14,7 +14,7 @@
 <PageErrorBoundary>
     <MudLayout>
         <MudAppBar Elevation="1">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => DrawerToggle())"/>
             <MudText Typo="Typo.h5" Class="ml-3">Vehicle Tracking</MudText>
             <MudSpacer/>
             <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle"/>
@@ -56,7 +56,7 @@
 @code {
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
-    private MudTheme? _theme = null;
+    private MudTheme? _theme;
 
     protected override void OnInitialized()
     {
@@ -72,7 +72,7 @@
     
     private async Task HandleLogout()
     {
-        var response = await JSRuntime.InvokeAsync<AuthResponseDto>(
+        var response = await JsRuntime.InvokeAsync<AuthResponseDto>(
             "window.logout"
         );
         

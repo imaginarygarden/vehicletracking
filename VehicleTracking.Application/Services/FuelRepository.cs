@@ -1,4 +1,3 @@
-using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Models.Application;
@@ -9,6 +8,29 @@ namespace VehicleTracking.Application.Services;
 
 public class FuelRepository(IDataStore dataStore) : IFuelRepository
 {
+    private async Task<bool> OwnsVehicleAsync(Guid vehicleId, Guid userId)
+    {
+        return await dataStore.QueryAsync<Vehicle, bool>(
+            query => query.AnyAsync(e => e.Id == vehicleId && e.UserId == userId));
+    }
+
+    private async Task<FuelEntry?> GetOwnedFuelEntryAsync(Guid vehicleId, Guid fuelEntryId, Guid userId)
+    {
+        return await dataStore.QueryAsync<FuelEntry, FuelEntry?>(
+            query => query.FirstOrDefaultAsync(e =>
+                e.Id == fuelEntryId &&
+                e.VehicleId == vehicleId &&
+                e.Vehicle.UserId == userId));
+    }
+
+    private static bool IsValid(FuelEntryDataDto data)
+    {
+        return data.RefueledAt != default &&
+               data.Odometer is >= 0 and <= 10000000 &&
+               data.Liters is > 0 and <= 10000 &&
+               data.TotalPrice is >= 0 and <= 1000000;
+    }
+    
     public async Task<ICollection<FuelEntryDto>> GetForVehicleAsync(Guid vehicleId, SessionDto session)
     {
         if (!Guid.TryParse(session.UserId, out var userId))
@@ -62,30 +84,5 @@ public class FuelRepository(IDataStore dataStore) : IFuelRepository
 
         var ownedEntry = await GetOwnedFuelEntryAsync(vehicleId, fuelEntryId, userId);
         return ownedEntry != null && await dataStore.RemoveAsync(ownedEntry) != null;
-    }
-
-    private async Task<bool> OwnsVehicleAsync(Guid vehicleId, Guid userId)
-    {
-        return await dataStore.QueryAsync<Vehicle, bool>(
-            query => query.AnyAsync(e => e.Id == vehicleId && e.UserId == userId));
-    }
-
-    private async Task<FuelEntry?> GetOwnedFuelEntryAsync(Guid vehicleId, Guid fuelEntryId, Guid userId)
-    {
-        return await dataStore.QueryAsync<FuelEntry, FuelEntry?>(
-            query => query.FirstOrDefaultAsync(e =>
-                e.Id == fuelEntryId &&
-                e.VehicleId == vehicleId &&
-                e.Vehicle.UserId == userId));
-    }
-
-    private static bool IsValid(FuelEntryDataDto data)
-    {
-        double.IsNaN(2);
-        return data.RefueledAt != default &&
-               data.Odometer is >= 0 and <= 10000000 &&
-               data.Liters is > 0 and <= 10000 &&
-               data.TotalPrice is >= 0 and <= 1000000
-               ;
     }
 }

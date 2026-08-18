@@ -42,7 +42,7 @@ public class Verificator(IDataStore dataStore, TimeProvider timeProvider) : IVer
     public async Task<bool> VerifyClaimsAsync(IEnumerable<Claim> claims)
     {
         var dummyClaims = SessionDto.Dummy.Claims;
-        var isMatchedOrDefault = claims?.All(i => dummyClaims.Any(j => j.Type == i.Type)) ?? false;
+        var isMatchedOrDefault = claims.All(i => dummyClaims.Any(j => j.Type == i.Type));
 
         return isMatchedOrDefault;
     }

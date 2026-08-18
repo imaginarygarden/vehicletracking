@@ -1,6 +1,5 @@
 ﻿using VehicleTracking.Application.Enums;
 using VehicleTracking.Application.Interfaces;
-using VehicleTracking.Application.Models;
 using VehicleTracking.Application.Models.Authentication;
 using VehicleTracking.Web.Extensions;
 using VehicleTracking.Web.Utilities;
@@ -59,7 +58,7 @@ public static class AuthResources
         
         return response switch
         {
-            ResponseDto<SessionDto>.SuccessDto success =>
+            ResponseDto<SessionDto>.SuccessDto _ =>
                 await AuthUtilities.SignOutUserAsync(context, Results.Ok()),
 
             ResponseDto<SessionDto>.FailureDto failure =>

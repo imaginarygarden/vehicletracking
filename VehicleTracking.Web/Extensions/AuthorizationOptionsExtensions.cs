@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using VehicleTracking.Domain.Enums;
 
 namespace VehicleTracking.Web.Extensions;
