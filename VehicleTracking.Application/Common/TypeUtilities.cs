@@ -13,7 +13,7 @@ public static class TypeUtilities
             if (conversionType.GetTypeInfo().IsEnum)
                 targetValue = Enum.Parse(conversionType, value);
             
-            return Convert.ChangeType(targetValue, conversionType);;
+            return Convert.ChangeType(targetValue, conversionType);
         }
         catch (Exception)
         {

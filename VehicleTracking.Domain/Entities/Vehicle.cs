@@ -1,16 +1,16 @@
-﻿using VehicleTracking.Application.Interfaces;
+﻿using VehicleTracking.Domain.Interfaces;
 
 namespace VehicleTracking.Domain.Entities;
 
-public class Vehicle : IDbSetEntity
+public class Vehicle : IEntity
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
     public DateOnly FirstRegistration { get; set; }
     public required string LicensePlate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
     public User User { get; set; } = null!;
-    public ICollection<GasBill> GasBills { get; set; } = [];
+    public ICollection<FuelEntry> FuelEntries { get; set; } = [];
 }

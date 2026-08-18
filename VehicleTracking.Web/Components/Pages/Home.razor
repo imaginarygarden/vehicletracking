@@ -1,59 +1,174 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+@using Microsoft.AspNetCore.Components.Authorization
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor and the .NET 9 Template!</MudText>
+<PageTitle>Vehicle Tracking</PageTitle>
 
-<MudAlert Severity="Severity.Normal" ContentAlignment="HorizontalAlignment.Start">
-    You can find documentation and examples on our website here:
-    <MudLink Href="https://mudblazor.com" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        <b>www.mudblazor.com</b>
-    </MudLink>
-</MudAlert>
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    <MudPaper Elevation="2" Class="pa-6 pa-sm-10 mb-8" Style="overflow: hidden;">
+        <MudGrid Spacing="6">
+            <MudItem xs="12" md="7">
+                <MudChip T="string"
+                         Color="Color.Primary"
+                         Variant="Variant.Outlined"
+                         Icon="@Icons.Material.Filled.DirectionsCar"
+                         Class="mb-4">
+                    Your vehicle, clearly tracked
+                </MudChip>
 
-<br/>
-<MudText Typo="Typo.h5" GutterBottom="true">Interactivity in this Template</MudText>
-<br/>
-<MudText Typo="Typo.body2">
-    When you opt for the "Global" Interactivity Location, <br/>
-    the render modes are defined in App.razor and consequently apply to all child components.<br/>
-    In this case, providers are globally set in the MainLayout.<br/>
-    <br/>
-    On the other hand, if you choose the "Per page/component" Interactivity Location,<br/>
-    it is necessary to include the <br/>
-    <br/>
-    &lt;MudPopoverProvider /&gt; <br/>
-    &lt;MudDialogProvider /&gt; <br/>
-    &lt;MudSnackbarProvider /&gt; <br/>
-    <br/>
-    components on every interactive page.<br/>
-    <br/>
-    If a render mode is not specified for a page, it defaults to Server-Side Rendering (SSR),<br/>
-    similar to this page. While MudBlazor allows pages to be rendered in SSR,<br/>
-    please note that interactive features, such as buttons and dropdown menus, will not be functional.
-</MudText>
+                <MudText Typo="Typo.h2" Class="font-weight-bold mb-4">
+                    Know what your vehicle is costing you.
+                </MudText>
 
-<br/>
-<MudText Typo="Typo.h5" GutterBottom="true">What's New in Blazor with the Release of .NET 9</MudText>
-<br/>
+                <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mb-6">
+                    Keep your vehicles and refueling history in one place, follow fuel
+                    consumption, and understand your running costs over time.
+                </MudText>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Prerendering</MudText>
-<MudText Typo="Typo.body2" GutterBottom="true">
-    If you're exploring the features of .NET 9 Blazor,<br/> you might be pleasantly surprised to learn that each page is prerendered on the server,<br/> regardless of the selected render mode.<br/><br/>
-    This means that you'll need to inject all necessary services on the server,<br/> even when opting for the wasm (WebAssembly) render mode.<br/><br/>
-    This prerendering functionality is crucial to ensuring that WebAssembly mode feels fast and responsive,<br/> especially when it comes to initial page load times.<br/><br/>
-    For more information on how to detect prerendering and leverage the RenderContext, you can refer to the following link:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issuecomment-1783568121" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+                <AuthorizeView>
+                    <Authorized>
+                        <MudButton Href="/vehicles"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Large"
+                                   EndIcon="@Icons.Material.Filled.ArrowForward">
+                            Open dashboard
+                        </MudButton>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Href="/register"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       EndIcon="@Icons.Material.Filled.ArrowForward">
+                                Get started
+                            </MudButton>
+                            <MudButton Href="/login"
+                                       Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Large">
+                                Sign in
+                            </MudButton>
+                        </MudStack>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </MudItem>
 
-<br/>
-<MudText Typo="Typo.h6" GutterBottom="true">InteractiveAuto</MudText>
-<MudText Typo="Typo.body2">
-    A discussion on how to achieve this can be found here:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issue-1950424116" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+            <MudItem xs="12" md="5">
+                <MudPaper Elevation="0" Class="pa-6 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Speed"
+                             Color="Color.Primary"
+                             Style="font-size: 8rem;" />
+                    <MudText Typo="Typo.h5" Class="font-weight-bold mt-3">
+                        Simple records. Useful insights.
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                        Add each refueling and let the dashboard turn your records into
+                        practical mileage and cost statistics.
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudText Typo="Typo.h4" Align="Align.Center" Class="font-weight-bold mb-2">
+        Everything you need to start tracking
+    </MudText>
+    <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary" Class="mb-6">
+        A focused dashboard for the information that matters most.
+    </MudText>
+
+    <MudGrid Spacing="4" Class="mb-10">
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="1" Class="pa-6" Style="height: 100%;">
+                <MudIcon Icon="@Icons.Material.Filled.DirectionsCar"
+                         Color="Color.Primary"
+                         Size="Size.Large"
+                         Class="mb-3" />
+                <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">
+                    Vehicle overview
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Keep registration details and each vehicle's history organized in a
+                    dedicated dashboard.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="1" Class="pa-6" Style="height: 100%;">
+                <MudIcon Icon="@Icons.Material.Filled.LocalGasStation"
+                         Color="Color.Primary"
+                         Size="Size.Large"
+                         Class="mb-3" />
+                <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">
+                    Refueling history
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Record dates, odometer readings, liters, prices, and full or partial
+                    fills as they happen.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="1" Class="pa-6" Style="height: 100%;">
+                <MudIcon Icon="@Icons.Material.Filled.Insights"
+                         Color="Color.Primary"
+                         Size="Size.Large"
+                         Class="mb-3" />
+                <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">
+                    Meaningful statistics
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    See consumption, distance, total fuel spend, average fuel price, and
+                    cost per kilometer at a glance.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Elevation="1" Class="pa-6 pa-sm-8">
+        <MudGrid Spacing="4">
+            <MudItem xs="12" md="8">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                    <MudIcon Icon="@Icons.Material.Filled.Security"
+                             Color="Color.Success"
+                             Size="Size.Large" />
+                    <div>
+                        <MudText Typo="Typo.h5" Class="font-weight-bold">
+                            Your records stay with your account
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+                            Vehicle and fuel information is protected by authenticated,
+                            owner-specific access throughout the application.
+                        </MudText>
+                    </div>
+                </MudStack>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <AuthorizeView>
+                    <Authorized>
+                        <MudButton Href="/vehicles"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Dashboard">
+                            View my vehicles
+                        </MudButton>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudButton Href="/register"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.PersonAdd">
+                            Create an account
+                        </MudButton>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>

@@ -1,0 +1,374 @@
+@page "/vehicles/{id}"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using VehicleTracking.Application.Common
+@using VehicleTracking.Application.Interfaces
+@using VehicleTracking.Application.Models.Application
+@using VehicleTracking.Application.Models.Authentication
+@using VehicleTracking.Web.Extensions
+
+@inject IVehicleRepository VehicleRepository
+@inject IFuelRepository FuelRepository
+@inject IFuelCalculationService FuelCalculationService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@attribute [Authorize(Policy = "NotBannedAndAuthorized")]
+
+<PageTitle>@(_vehicle == null ? "Vehicle" : _vehicle.LicensePlate)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+    @if (_loading)
+    {
+        <MudPaper Class="pa-20">
+            <MudStack Justify="Justify.Center" Row="true" Spacing="2">
+                <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+            </MudStack>
+        </MudPaper>
+    }
+    else
+    {
+        <MudButton Variant="Variant.Text"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="BackToVehicles"
+                   Class="mb-4">
+            Back to vehicles
+        </MudButton>
+
+        <MudPaper Elevation="2" Class="pa-6 mb-6">
+            @if (_editingVehicle)
+            {
+                <MudForm @ref="_vehicleForm">
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_editedLicensePlate"
+                                          Label="License plate"
+                                          Variant="Variant.Outlined"
+                                          Required="true"
+                                          RequiredError="License plate is required"
+                                          Immediate="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudDatePicker @bind-Date="_editedFirstRegistration"
+                                           Label="First registration"
+                                           Variant="Variant.Outlined"
+                                           Required="true"
+                                           RequiredError="First registration is required"
+                                           DateFormat="dd.MM.yyyy" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                                <MudButton Variant="Variant.Text" OnClick="CancelVehicleEdit">
+                                    Cancel
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.Save"
+                                           Disabled="@(!HasVehicleChanges)"
+                                           OnClick="SaveVehicle">
+                                    Save
+                                </MudButton>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+                </MudForm>
+            }
+            else
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudText Typo="Typo.h4" Class="font-weight-bold">@_vehicle.LicensePlate</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            First registration: @_vehicle.FirstRegistration.ToString("dd.MM.yyyy")
+                        </MudText>
+                    </div>
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="Variant.Outlined"
+                                   StartIcon="@Icons.Material.Filled.Edit"
+                                   OnClick="BeginVehicleEdit">
+                            Edit
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Error"
+                                   StartIcon="@Icons.Material.Filled.Delete"
+                                   OnClick="DeleteVehicle">
+                            Delete
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            }
+        </MudPaper>
+
+        <MudText Typo="Typo.h5" Class="font-weight-bold mb-3">Statistics</MudText>
+        <MudGrid Spacing="3" Class="mb-6">
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Average consumption</MudText>
+                    <MudText Typo="Typo.h6">@FormatValue(_statistics.AverageConsumption, "L/100 km")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Total fuel cost</MudText>
+                    <MudText Typo="Typo.h6">@FormatValue(HasFuelEntries ? _statistics.TotalFuelCost : null, "")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Total liters</MudText>
+                    <MudText Typo="Typo.h6">@FormatValue(HasFuelEntries ? _statistics.TotalLiters : null, "L")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Total distance</MudText>
+                    <MudText Typo="Typo.h6">@FormatValue(_statistics.TotalDistance, "km")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Average fuel price</MudText>
+                    <MudText Typo="Typo.h6">@FormatValue(_statistics.AverageFuelPricePerLiter, "/L")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="1" Class="pa-4">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Cost per kilometer</MudText>
+                    <MudText Typo="Typo.h6">@FormatValue(_statistics.CostPerKilometer, "/km")</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+            <div>
+                <MudText Typo="Typo.h5" Class="font-weight-bold">Fuel</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Refueling history and consumption.</MudText>
+            </div>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.LocalGasStation"
+                       OnClick="@(() => OpenFuelDialog())">
+                Add refueling
+            </MudButton>
+        </MudStack>
+
+        @if (_statistics.Entries.Count == 0)
+        {
+            <MudPaper Class="pa-10 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.LocalGasStation"
+                         Size="Size.Large"
+                         Color="Color.Secondary"
+                         Class="mb-4" />
+                <MudText Typo="Typo.h6" Class="mb-2">No fuel entries yet</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-5">
+                    Add your first refueling to start tracking consumption.
+                </MudText>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@(() => OpenFuelDialog())">
+                    Add refueling
+                </MudButton>
+            </MudPaper>
+        }
+        else
+        {
+            <MudPaper Elevation="2">
+                <MudTable T="FuelEntryStatisticsDto"
+                          Items="_statistics.Entries"
+                          Hover="true"
+                          Breakpoint="Breakpoint.Sm"
+                          RowClass="cursor-pointer"
+                          OnRowClick="@((TableRowClickEventArgs<FuelEntryStatisticsDto> args) => OnFuelRowClick(args))">
+                    <HeaderContent>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Odometer</MudTh>
+                        <MudTh>Liters</MudTh>
+                        <MudTh>Total price</MudTh>
+                        <MudTh>Price/liter</MudTh>
+                        <MudTh>Consumption</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Date">@context.Entry.RefueledAt.ToLocalTime().ToString("dd.MM.yyyy")</MudTd>
+                        <MudTd DataLabel="Odometer">@context.Entry.Odometer.ToString("N0") km</MudTd>
+                        <MudTd DataLabel="Liters">@context.Entry.Liters.ToString("N0") L</MudTd>
+                        <MudTd DataLabel="Total price">@context.Entry.TotalPrice.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Price/liter">@FormatPricePerLiter(context.Entry)</MudTd>
+                        <MudTd DataLabel="Consumption">@FormatValue(context.Consumption, "L/100 km")</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new[] { 5, 10, 25, 50 }"
+                                       RowsPerPageString="Entries per page" />
+                    </PagerContent>
+                </MudTable>
+            </MudPaper>
+        }
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    private bool _loading = true;
+    private bool _editingVehicle;
+    private VehicleDto _vehicle = null!;
+    private SessionDto _session = null!;
+    private FuelStatisticsDto _statistics = EmptyStatistics;
+    private MudForm? _vehicleForm;
+    private string _editedLicensePlate = string.Empty;
+    private DateTime? _editedFirstRegistration;
+
+    private static FuelStatisticsDto EmptyStatistics => new([], 0, 0, null, null, null, null);
+
+    private bool HasVehicleChanges =>
+        !string.IsNullOrWhiteSpace(_editedLicensePlate) &&
+        _editedFirstRegistration != null &&
+        (!string.Equals(_editedLicensePlate.Trim(), _vehicle.LicensePlate, StringComparison.Ordinal) ||
+         DateOnly.FromDateTime(_editedFirstRegistration.Value) != _vehicle.FirstRegistration);
+
+    private bool HasFuelEntries => _statistics.Entries.Count > 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _session = authState.User.GetSession()!;
+
+        if (!Guid.TryParse(Id, out var vehicleId))
+        {
+            NavigationManager.NavigateTo(EnvironmentUtilities.GetVariable<string>("NOT_FOUND_PATH"));
+            return;
+        }
+
+        var vehicle = await VehicleRepository.GetSingleForUser(vehicleId, _session);
+        if (vehicle == null)
+        {
+            NavigationManager.NavigateTo(EnvironmentUtilities.GetVariable<string>("NOT_FOUND_PATH"));
+            return;
+        }
+
+        _vehicle = vehicle;
+        await ReloadFuelAsync();
+        _loading = false;
+    }
+
+    private void BeginVehicleEdit()
+    {
+        _editedLicensePlate = _vehicle.LicensePlate;
+        _editedFirstRegistration = _vehicle.FirstRegistration.ToDateTime(TimeOnly.MinValue);
+        _editingVehicle = true;
+    }
+
+    private void CancelVehicleEdit()
+    {
+        _editingVehicle = false;
+    }
+
+    private async Task SaveVehicle()
+    {
+        if (_vehicleForm == null || !HasVehicleChanges)
+            return;
+
+        await _vehicleForm.Validate();
+        if (!_vehicleForm.IsValid || _editedFirstRegistration == null)
+            return;
+
+        var data = new VehicleDataDto(
+            DateOnly.FromDateTime(_editedFirstRegistration.Value),
+            _editedLicensePlate.Trim());
+
+        if (!await VehicleRepository.UpdateAsync(_vehicle, data, _session))
+        {
+            Snackbar.Add("The vehicle could not be updated.", Severity.Error);
+            return;
+        }
+
+        var reloadedVehicle = await VehicleRepository.GetSingleForUser(_vehicle.Id, _session);
+        if (reloadedVehicle == null)
+        {
+            NavigationManager.NavigateTo(EnvironmentUtilities.GetVariable<string>("NOT_FOUND_PATH"));
+            return;
+        }
+
+        _vehicle = reloadedVehicle;
+        _editingVehicle = false;
+        Snackbar.Add("Vehicle updated.", Severity.Success);
+    }
+
+    private async Task DeleteVehicle()
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Delete vehicle",
+            $"Do you really want to delete {_vehicle.LicensePlate} and all of its fuel entries?",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (confirmed != true)
+            return;
+
+        if (!await VehicleRepository.RemoveAsync(_vehicle.Id, _session))
+        {
+            Snackbar.Add("The vehicle could not be deleted.", Severity.Error);
+            return;
+        }
+
+        NavigationManager.NavigateTo("/vehicles");
+    }
+
+    private async Task OpenFuelDialog(FuelEntryDto? fuelEntry = null)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(FuelEntryDialog.VehicleId), _vehicle.Id },
+            { nameof(FuelEntryDialog.Session), _session },
+            { nameof(FuelEntryDialog.FuelEntry), fuelEntry }
+        };
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+        var title = fuelEntry == null ? "Add refueling" : "Edit refueling";
+        var dialog = await DialogService.ShowAsync<FuelEntryDialog>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+            await ReloadFuelAsync();
+    }
+
+    private async Task OnFuelRowClick(TableRowClickEventArgs<FuelEntryStatisticsDto> args)
+    {
+        if (args.Item != null)
+            await OpenFuelDialog(args.Item.Entry);
+    }
+
+    private async Task ReloadFuelAsync()
+    {
+        var entries = await FuelRepository.GetForVehicleAsync(_vehicle.Id, _session);
+        _statistics = FuelCalculationService.Calculate(entries);
+    }
+
+    private void BackToVehicles()
+    {
+        NavigationManager.NavigateTo("/vehicles");
+    }
+
+    private static string FormatValue(decimal? value, string suffix)
+    {
+        return value.HasValue ? $"{value.Value:N2}{(suffix.Length > 0 ? $" {suffix}" : string.Empty)}" : "—";
+    }
+
+    private static string FormatValue(int? value, string suffix)
+    {
+        return value.HasValue ? $"{value.Value:N0} {suffix}" : "—";
+    }
+
+    private static string FormatPricePerLiter(FuelEntryDto entry)
+    {
+        return entry.Liters > 0 ? $"{entry.TotalPrice / entry.Liters:N2}" : "—";
+    }
+}

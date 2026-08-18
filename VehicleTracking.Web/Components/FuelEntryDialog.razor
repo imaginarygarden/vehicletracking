@@ -1,0 +1,162 @@
+@using VehicleTracking.Application.Interfaces
+@using VehicleTracking.Application.Models.Application
+@using VehicleTracking.Application.Models.Authentication
+
+@inject IFuelRepository FuelRepository
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudStack Spacing="4">
+                <MudDatePicker @bind-Date="_refueledAt"
+                               Label="Refueling date"
+                               Variant="Variant.Outlined"
+                               Required="true"
+                               RequiredError="Refueling date is required"
+                               DateFormat="dd.MM.yyyy"
+                               MaxDate="DateTime.Today" />
+
+                <MudNumericField T="int"
+                                 @bind-Value="_odometer"
+                                 Label="Odometer (km)"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Max="10000000"
+                                 Required="true" />
+
+                <MudNumericField T="decimal"
+                                 @bind-Value="_liters"
+                                 Label="Liters"
+                                 Variant="Variant.Outlined"
+                                 Min="1"
+                                 Max="10000"
+                                 Required="true" />
+
+                <MudNumericField T="decimal"
+                                 @bind-Value="_price"
+                                 Label="Total price"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Max="1000000"
+                                 Format="N2"
+                                 Required="true" />
+
+                <MudSwitch T="bool"
+                           @bind-Value="_fullTank"
+                           Color="Color.Primary"
+                           Label="Full tank" />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        @if (FuelEntry != null)
+        {
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Error"
+                       StartIcon="@Icons.Material.Filled.Delete"
+                       OnClick="Delete">
+                Delete
+            </MudButton>
+        }
+
+        <MudSpacer />
+
+        <MudButton Variant="Variant.Text" OnClick="Cancel">
+            Cancel
+        </MudButton>
+
+        <MudButton StartIcon="@Icons.Material.Filled.Save"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="Save">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public Guid VehicleId { get; set; }
+    [Parameter] public SessionDto Session { get; set; } = null!;
+    [Parameter] public FuelEntryDto? FuelEntry { get; set; }
+
+    private MudForm? _form;
+    private DateTime? _refueledAt = DateTime.Today;
+    private int _odometer;
+    private decimal _liters;
+    private decimal _price;
+    private bool _fullTank = true;
+
+    protected override void OnInitialized()
+    {
+        if (FuelEntry == null)
+            return;
+
+        _refueledAt = FuelEntry.RefueledAt.ToLocalTime();
+        _odometer = FuelEntry.Odometer;
+        _liters = FuelEntry.Liters;
+        _price = FuelEntry.TotalPrice;
+        _fullTank = FuelEntry.FullTank;
+    }
+
+    private async Task Save()
+    {
+        if (_form == null)
+            return;
+
+        await _form.Validate();
+        if (!_form.IsValid || _refueledAt == null || _liters <= 0 || _odometer < 0 || _price < 0)
+            return;
+
+        var refueledAt = FuelEntry == null
+            ? DateTime.SpecifyKind(_refueledAt.Value.Date, DateTimeKind.Local).ToUniversalTime()
+            : DateTime.SpecifyKind(
+                _refueledAt.Value.Date.Add(FuelEntry.RefueledAt.ToLocalTime().TimeOfDay),
+                DateTimeKind.Local).ToUniversalTime();
+        var data = new FuelEntryDataDto(refueledAt, _liters, _price, _odometer, _fullTank);
+        var succeeded = FuelEntry == null
+            ? await FuelRepository.AddAsync(VehicleId, data, Session)
+            : await FuelRepository.UpdateAsync(VehicleId, FuelEntry, data, Session);
+
+        if (!succeeded)
+        {
+            Snackbar.Add("The refueling entry could not be saved.", Severity.Error);
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private async Task Delete()
+    {
+        if (FuelEntry == null)
+            return;
+
+        var confirmed = await DialogService.ShowMessageBox(
+            "Delete refueling",
+            "Do you really want to delete this refueling entry?",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (confirmed != true)
+            return;
+
+        if (!await FuelRepository.RemoveAsync(VehicleId, FuelEntry.Id, Session))
+        {
+            Snackbar.Add("The refueling entry could not be deleted.", Severity.Error);
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

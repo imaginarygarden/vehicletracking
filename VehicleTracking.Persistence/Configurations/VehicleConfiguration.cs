@@ -11,10 +11,9 @@ public class VehicleConfiguration : IEntityTypeConfiguration<Vehicle>
     {
         builder.ToTable("Vehicle");
         builder.HasKey(e => e.Id).HasName("Vehicle_PK");
-        builder.Property(e => e.Id).ValueGeneratedOnAdd();
         builder.Property(e => e.LicensePlate).IsRequired().HasMaxLength(EnvironmentUtilities.GetVariable<int>("MISC_MAX_LENGTH"));
-        builder.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-        builder.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+        builder.Property(e => e.CreatedAt).IsRequired();
+        builder.Property(e => e.UpdatedAt).IsRequired();
         
         builder.HasOne(e => e.User)
             .WithMany(e => e.Vehicles)

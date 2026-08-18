@@ -1,17 +1,41 @@
 ﻿@inherits LayoutComponentBase
 
+@using Microsoft.AspNetCore.Components.Authorization
+@using VehicleTracking.Application.Models.Authentication
+
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode"/>
 <MudPopoverProvider/>
 <MudDialogProvider/>
 <MudSnackbarProvider/>
-@* <PageErrorBoundary> *@
+<PageErrorBoundary>
     <MudLayout>
         <MudAppBar Elevation="1">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
-            <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => DrawerToggle())"/>
+            <MudText Typo="Typo.h5" Class="ml-3">Vehicle Tracking</MudText>
             <MudSpacer/>
             <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle"/>
-            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End"/>
+            <AuthorizeView>
+                <Authorized>
+                    <MudButton Color="Color.Inherit"
+                               StartIcon="@Icons.Material.Filled.Logout"
+                               OnClick="@HandleLogout"
+                               >
+                        Logout
+                    </MudButton>
+                </Authorized>
+
+                <NotAuthorized>
+                    <MudButton Color="Color.Inherit"
+                               StartIcon="@Icons.Material.Filled.Login"
+                               Href="/login">
+                        Login
+                    </MudButton>
+                </NotAuthorized>
+            </AuthorizeView>
         </MudAppBar>
         <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
             <NavMenu/>
@@ -20,7 +44,7 @@
             @Body
         </MudMainContent>
     </MudLayout>
-@* </PageErrorBoundary> *@
+</PageErrorBoundary>
 
 
 <div id="blazor-error-ui" data-nosnippet>
@@ -32,7 +56,7 @@
 @code {
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
-    private MudTheme? _theme = null;
+    private MudTheme? _theme;
 
     protected override void OnInitialized()
     {
@@ -44,6 +68,23 @@
             PaletteDark = _darkPalette,
             LayoutProperties = new LayoutProperties()
         };
+    }
+    
+    private async Task HandleLogout()
+    {
+        var response = await JsRuntime.InvokeAsync<AuthResponseDto>(
+            "window.logout"
+        );
+        
+        if (!response.Success)
+        {
+            Snackbar.Add(response.Message, Severity.Error);
+        }
+        
+        NavigationManager.NavigateTo(
+            "/",
+            forceLoad: true
+        );
     }
 
     private void DrawerToggle()

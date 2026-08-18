@@ -1,0 +1,172 @@
+﻿@page "/register"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using VehicleTracking.Application.Interfaces
+@using VehicleTracking.Application.Models.Authentication
+
+@attribute [AllowAnonymous]
+
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IVerificator Verificator
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Class="pa-6">
+
+        <MudText Typo="Typo.h5" GutterBottom="true">
+            Create your account
+        </MudText>
+
+        <EditForm Model="_model" OnValidSubmit="HandleRegister">
+            <DataAnnotationsValidator />
+
+            <MudStack Spacing="3">
+                
+                <MudTextField T="string"
+                              Label="Email"
+                              @bind-Value="_model.Email"
+                              For="@(() => _model.Email)"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Email"
+                              Disabled="_loading" />
+
+
+                <MudTextField T="string"
+                              Label="Username"
+                              @bind-Value="_model.Username"
+                              For="@(() => _model.Username)"
+                              Variant="Variant.Outlined"
+                              Disabled="_loading"/>
+
+                <MudTextField T="string"
+                              Label="Password"
+                              @bind-Value="_model.Password"
+                              For="@(() => _model.Password)"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              Disabled="_loading"/>
+
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <MudAlert Severity="Severity.Error">
+                        @_error
+                    </MudAlert>
+                }
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Disabled="_loading">
+
+                    @if (_loading)
+                    {
+                        <MudProgressCircular Size="Size.Small"
+                                             Indeterminate="true"
+                                             Class="me-2"/>
+                        <span>Creating account...</span>
+                    }
+                    else
+                    {
+                        <span>Create Account</span>
+                    }
+
+                </MudButton>
+                
+                <MudButton Color="Color.Inherit"
+                           Href="/login">
+                    Have an account? Log in
+                </MudButton>
+
+            </MudStack>
+        </EditForm>
+
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private readonly RegisterModel _model = new();
+
+    private bool _loading;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider
+            .GetAuthenticationStateAsync();
+
+        if (authState.User.Identity?.IsAuthenticated == true)
+            NavigationManager.NavigateTo("/");
+    }
+
+    private async Task HandleRegister()
+    {
+        _loading = true;
+        _error = null;
+
+        var passwordVerification = Verificator.VerifyPassword(_model.Password);
+
+        if (passwordVerification.Success)
+        {
+            var response = await JsRuntime.InvokeAsync<AuthResponseDto>(
+                "window.register",
+                _model.Username,
+                _model.Password,
+                _model.Email);
+
+            if (response.Success)
+            {
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                _error = response.Message;
+            }
+        }
+        else
+        {
+            _error = passwordVerification.Suggestions;
+        }
+
+        
+        _loading = false;
+    }
+    
+    public sealed class ValidPasswordAttribute : ValidationAttribute
+    {
+        protected override ValidationResult? IsValid(
+            object? value,
+            ValidationContext validationContext)
+        {
+            if (value is not string password || string.IsNullOrEmpty(password))
+                return ValidationResult.Success;
+
+            var verificator = validationContext.GetService(typeof(IVerificator))
+                                  as IVerificator
+                              ?? throw new InvalidOperationException("IVerificator is not registered.");
+
+            var result = verificator.VerifyPassword(password);
+
+            return result.Success
+                ? ValidationResult.Success
+                : new ValidationResult(result.Suggestions);
+        }
+    }
+
+    private sealed class RegisterModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
+        public string Email { get; set; } = "";
+        
+        [Required(ErrorMessage = "Username is required")]
+        public string Username { get; set; } = "";
+
+        [Required(ErrorMessage = "Password is required")]
+        [ValidPassword]
+        public string Password { get; set; } = "";
+    }
+}

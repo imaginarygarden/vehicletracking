@@ -1,0 +1,14 @@
+﻿@using VehicleTracking.Application.Common
+
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override Task OnInitializedAsync()
+    {
+        var redirectPath =
+            EnvironmentUtilities.GetVariable<string>("NOT_FOUND_PATH");
+        
+        NavigationManager.NavigateTo(redirectPath);
+        return Task.CompletedTask;
+    }
+}

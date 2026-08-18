@@ -12,12 +12,15 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.ToTable("User");
         builder.HasKey(e => e.Id).HasName("User_PK");
-        builder.Property(e => e.Id).ValueGeneratedOnAdd();
+        builder.HasIndex(e => e.Username).IsUnique();
+        builder.HasIndex(e => e.Email).IsUnique();
+        
         builder.Property(e => e.Username).IsRequired().HasMaxLength(EnvironmentUtilities.GetVariable<int>("CREDENTIALS_MAX_LENGTH"));
         builder.Property(e => e.Password).IsRequired().HasMaxLength(EnvironmentUtilities.GetVariable<int>("CREDENTIALS_MAX_LENGTH"));
         builder.Property(e => e.Email).IsRequired().HasMaxLength(EnvironmentUtilities.GetVariable<int>("CREDENTIALS_MAX_LENGTH"));
-        builder.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-        builder.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+        builder.Property(e => e.CreatedAt).IsRequired();
+        builder.Property(e => e.UpdatedAt).IsRequired();
+        builder.Property(e => e.LastSeenAt).IsRequired();
 
         // Enum conversion
         builder

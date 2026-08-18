@@ -1,0 +1,93 @@
+﻿@using VehicleTracking.Application.Interfaces
+@using VehicleTracking.Application.Models.Application
+@using VehicleTracking.Application.Models.Authentication
+
+@inject IVehicleRepository VehicleRepository
+@inject ISnackbar Snackbar
+
+<MudDialog>
+
+    <DialogContent>
+
+        <MudForm @ref="_form">
+
+            <MudStack Spacing="4">
+
+                <MudTextField @bind-Value="_licensePlate"
+                              Label="License plate"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              RequiredError="License plate is required"
+                              Immediate="true" />
+
+                <MudDatePicker @bind-Date="_firstRegistration"
+                               Label="First registration"
+                               Variant="Variant.Outlined"
+                               Required="true"
+                               RequiredError="First registration is required"
+                               DateFormat="dd.MM.yyyy" />
+                
+            </MudStack>
+
+        </MudForm>
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text"
+                   OnClick="Cancel">
+            Cancel
+        </MudButton>
+
+        <MudButton StartIcon="@Icons.Material.Filled.Save"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="Save">
+            Save
+        </MudButton>
+
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public SessionDto Session { get; set; } = null!;
+
+    private MudForm? _form;
+
+    private string _licensePlate = string.Empty;
+    private DateTime? _firstRegistration;
+
+    private async Task Save()
+    {
+        if (_form is null)
+            return;
+
+        await _form.Validate();
+
+        if (!_form.IsValid)
+            return;
+        
+        var createObject = new VehicleDataDto(
+            DateOnly.FromDateTime(_firstRegistration!.Value), 
+            _licensePlate.Trim()
+        );
+        
+        if (!await VehicleRepository.AddAsync(createObject, Session))
+        {
+            Snackbar.Add("The vehicle could not be created.", Severity.Error);
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

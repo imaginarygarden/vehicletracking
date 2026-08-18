@@ -6,8 +6,9 @@ using VehicleTracking.Application.Common;
 using VehicleTracking.Application.Interfaces;
 using VehicleTracking.Application.Services;
 using VehicleTracking.Persistence;
-using VehicleTracking.Web;
 using VehicleTracking.Web.Components;
+using VehicleTracking.Web.Extensions;
+using VehicleTracking.Web.Utilities;
 
 // Ensure ASPNETCORE_ENVIRONMENT is initialized beforehand
 EnvironmentUtilities.Bootstrap();
@@ -20,15 +21,22 @@ builder.Services.AddMudServices();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Register time provider
+builder.Services.AddSingleton(TimeProvider.System);
+
 // Add db connection
 builder.Services.AddDbContextFactory<VehicleTrackingDbContext>(options =>
-    options.UseNpgsql(EnvironmentUtilities.GetVariable<string>("CONNECTION_STRING"))
+    options.UseNpgsql(EnvironmentUtilities.GetVariable<string>("CONNECTION_STRING"), 
+        e => e.MigrationsHistoryTable("__EFMigrationsHistory"))
 );
 
 // Add user-defined services
 builder.Services.AddScoped<IDataStore, PostgresDataStore>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-// TODO: Do a proper migration
+builder.Services.AddScoped<IVerificator, Verificator>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<IFuelRepository, FuelRepository>();
+builder.Services.AddSingleton<IFuelCalculationService, FuelCalculationService>();
 builder.Services.AddScoped(_ => new HttpClient
 {
     BaseAddress = new Uri(EnvironmentUtilities.GetVariable<string>("ASPNETCORE_URLS").Split(";").Last())
@@ -43,13 +51,31 @@ builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/login";
-        options.LogoutPath = "/logout";
+        options.LoginPath = EnvironmentUtilities.GetVariable<string>("LOGIN_PATH");
+        options.AccessDeniedPath = EnvironmentUtilities.GetVariable<string>("ACCESS_DENIED_PATH");
+        options.ExpireTimeSpan = TimeSpan.FromHours(EnvironmentUtilities.GetVariable<int>("AUTH_EXPIRATION_HOURS"));
+        options.SlidingExpiration = true;
+        options.Events.OnValidatePrincipal = AuthUtilities.OnValidatePrincipal;
     });
 
-builder.Services.AddAuthorization();
+// Register access policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicies();
+});
+
+builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
+
+// Apply pending migrations so a fresh containerized database is ready to use.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContextFactory = scope.ServiceProvider
+        .GetRequiredService<IDbContextFactory<VehicleTrackingDbContext>>();
+    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+    await dbContext.Database.MigrateAsync();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -57,7 +83,7 @@ app.UseAuthorization();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -67,8 +93,9 @@ else
     app.MapScalarApiReference();
 }
 
-app.UseHttpsRedirection();
+app.UseStatusCodePagesWithReExecute(EnvironmentUtilities.GetVariable<string>("NOT_FOUND_PATH"));
 
+app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
